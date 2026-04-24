@@ -27,6 +27,31 @@
     overflow: hidden;
     padding: 2rem 1rem;
   }
+  .ticker {
+    margin: 0 0 2rem;
+    padding: 0.85rem 1.25rem;
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(251, 191, 36, 0.08);
+  }
+  .ticker-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+  }
+  .ticker-value {
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: clamp(1.4rem, 3.2vw, 2.2rem);
+    font-weight: 700;
+    color: #fbbf24;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 20px rgba(251, 191, 36, 0.35);
+  }
   h1 {
     font-size: clamp(1.2rem, 2.5vw, 1.6rem);
     font-weight: 500;
@@ -149,6 +174,11 @@
 </style>
 </head>
 <body>
+  <div class="ticker" aria-live="off">
+    <div class="ticker-label">Total Free 1st Party Cost · since Apr 1, 2026</div>
+    <div id="ticker-value" class="ticker-value">$6,000,000.00</div>
+  </div>
+
   <h1>Meeting Cost-o-Meter</h1>
 
   <div class="tabs" role="tablist" aria-label="Team rate">
@@ -183,6 +213,24 @@
   };
   let currentTeamKey = 'ffp';
   const ratePerMs = () => TEAMS[currentTeamKey].ratePerMinute / 60 / 1000;
+
+  // FFP debt clock: $6M base + $40/min from April 1, 2026 midnight Central (CDT, UTC-5)
+  const FFP_BASE_DOLLARS = 6_000_000;
+  const FFP_RATE_PER_MS = 40 / 60 / 1000;
+  const FFP_EPOCH_MS = Date.parse('2026-04-01T00:00:00-05:00');
+  const currencyFmt = new Intl.NumberFormat('en-US', {
+    style: 'currency', currency: 'USD',
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
+  });
+  const tickerEl = document.getElementById('ticker-value');
+
+  function renderTicker() {
+    const elapsed = Date.now() - FFP_EPOCH_MS;
+    const total = FFP_BASE_DOLLARS + Math.max(0, elapsed) * FFP_RATE_PER_MS;
+    tickerEl.textContent = currencyFmt.format(total);
+    requestAnimationFrame(renderTicker);
+  }
+  renderTicker();
 
   const costEl = document.getElementById('cost');
   const timerEl = document.getElementById('timer');
