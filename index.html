@@ -41,11 +41,36 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     min-height: 100vh;
     transition: background-color 600ms ease;
-    overflow: hidden;
+  }
+  .hero {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     padding: 2rem 1rem;
+    position: relative;
+  }
+  .scroll-hint {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.55;
+    animation: bob 2.2s ease-in-out infinite;
+    pointer-events: none;
+    text-align: center;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translate(-50%, 0); }
+    50% { transform: translate(-50%, 5px); }
   }
   .ticker {
     margin: 0 0 2rem;
@@ -191,6 +216,80 @@
     25% { transform: translateX(-8px); }
     75% { transform: translateX(8px); }
   }
+  .custom-section {
+    width: 100%;
+    max-width: 520px;
+    padding: 3rem 1.5rem 5rem;
+    text-align: center;
+    margin: 0 auto;
+  }
+  .custom-section h2 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin: 0 0 0.75rem;
+  }
+  .custom-section .blurb {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    margin-bottom: 1.75rem;
+  }
+  .custom-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .input-wrap {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 0.35rem 1rem;
+    transition: border-color 150ms ease;
+  }
+  .input-wrap:focus-within { border-color: var(--accent); }
+  .input-wrap .dollar,
+  .input-wrap .per-hour {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+  .input-wrap .per-hour { margin-left: 0.3rem; }
+  .input-wrap input {
+    background: transparent;
+    border: none;
+    color: var(--fg);
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    width: 5.5rem;
+    outline: none;
+    padding: 0.4rem 0.2rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .input-wrap input::-webkit-outer-spin-button,
+  .input-wrap input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .input-wrap input[type=number] { -moz-appearance: textfield; }
+  .custom-section .error {
+    color: var(--danger);
+    font-size: 0.85rem;
+    margin-top: 0.75rem;
+    min-height: 1.25rem;
+  }
+  .custom-section .footnote {
+    font-size: 0.75rem;
+    color: var(--muted);
+    opacity: 0.7;
+    margin-top: 1.5rem;
+  }
   .money-drop {
     position: fixed;
     top: -2rem;
@@ -207,42 +306,62 @@
 </style>
 </head>
 <body>
-  <div class="ticker" aria-live="off">
-    <div class="ticker-label">Total Free 1st Party Cost</div>
-    <div id="ticker-value" class="ticker-value">$6,000,000.00</div>
-  </div>
+  <main class="hero">
+    <div class="ticker" aria-live="off">
+      <div class="ticker-label">Total Free 1st Party Cost</div>
+      <div id="ticker-value" class="ticker-value">$6,000,000.00</div>
+    </div>
 
-  <h1>Meeting Cost-o-Meter</h1>
+    <h1>Meeting Cost-o-Meter</h1>
 
-  <div class="tabs" role="tablist" aria-label="Team rate">
-    <button class="tab active" data-team="ffp" role="tab" aria-selected="true">
-      <span class="tab-icon">🏎️</span> Free 1st Party
-    </button>
-    <button class="tab" data-team="cowboys" role="tab" aria-selected="false">
-      <span class="tab-icon">🤠</span> Space Cowboys
-    </button>
-  </div>
+    <div class="tabs" role="tablist" aria-label="Team rate">
+      <button class="tab active" data-team="ffp" role="tab" aria-selected="true">
+        <span class="tab-icon">🏎️</span> Free 1st Party
+      </button>
+      <button class="tab" data-team="cowboys" role="tab" aria-selected="false">
+        <span class="tab-icon">🤠</span> Space Cowboys
+      </button>
+    </div>
 
-  <div id="rate" class="rate">🏎️ Free 1st Party · $40 / minute</div>
+    <div id="rate" class="rate">🏎️ Free 1st Party · $40 / minute</div>
 
-  <div id="cost" class="cost">$0.00</div>
-  <div id="timer" class="timer">00:00</div>
+    <div id="cost" class="cost">$0.00</div>
+    <div id="timer" class="timer">00:00</div>
 
-  <div class="mood">
-    <div id="mood-emoji" class="emoji">☕</div>
-    <div id="mood-message" class="message">Ready when you are.</div>
-  </div>
+    <div class="mood">
+      <div id="mood-emoji" class="emoji">☕</div>
+      <div id="mood-message" class="message">Ready when you are.</div>
+    </div>
 
-  <div class="controls">
-    <button id="start" class="primary">Start</button>
-    <button id="stop" class="danger" disabled>Stop</button>
-    <button id="restart" disabled>Restart</button>
-  </div>
+    <div class="controls">
+      <button id="start" class="primary">Start</button>
+      <button id="stop" class="danger" disabled>Stop</button>
+      <button id="restart" disabled>Restart</button>
+    </div>
+
+    <div class="scroll-hint">▼ Custom rate below</div>
+  </main>
+
+  <section class="custom-section" id="custom-section">
+    <h2>✏️ Bring Your Own Rate</h2>
+    <p class="blurb">Billing $150/hr? Your attorney at $500? Your contractor at $85? Plug it in — a ✏️ Custom tab appears up top.</p>
+    <form class="custom-form" id="custom-form">
+      <div class="input-wrap">
+        <span class="dollar">$</span>
+        <input type="number" id="custom-rate" min="0" step="0.01" placeholder="150" aria-label="Hourly rate in dollars" inputmode="decimal" />
+        <span class="per-hour">/ hour</span>
+      </div>
+      <button type="submit" class="primary">Apply</button>
+      <button type="button" id="custom-reset">Reset</button>
+    </form>
+    <div class="error" id="custom-error" role="alert"></div>
+    <p class="footnote">Saved in your browser only — no server, no tracking.</p>
+  </section>
 
 <script>
   const TEAMS = {
-    ffp:     { label: 'Free 1st Party', icon: '🏎️', ratePerMinute: 40 },
-    cowboys: { label: 'Space Cowboys',  icon: '🤠', ratePerMinute: 10 },
+    ffp:     { label: 'Free 1st Party', icon: '🏎️', ratePerMinute: 40, displayRate: '$40 / minute' },
+    cowboys: { label: 'Space Cowboys',  icon: '🤠', ratePerMinute: 10, displayRate: '$10 / minute' },
   };
   let currentTeamKey = 'ffp';
   const ratePerMs = () => TEAMS[currentTeamKey].ratePerMinute / 60 / 1000;
@@ -373,7 +492,7 @@
     if (!TEAMS[teamKey] || teamKey === currentTeamKey) return;
     currentTeamKey = teamKey;
     const team = TEAMS[teamKey];
-    rateEl.textContent = `${team.icon} ${team.label} · $${team.ratePerMinute} / minute`;
+    rateEl.textContent = `${team.icon} ${team.label} · ${team.displayRate}`;
     tabEls.forEach(el => {
       const active = el.dataset.team === teamKey;
       el.classList.toggle('active', active);
@@ -383,6 +502,81 @@
   }
 
   tabEls.forEach(el => el.addEventListener('click', () => setTeam(el.dataset.team)));
+
+  // ─── custom rate (below the fold) ──────────────────────────────
+  const LS_KEY = 'meeting-cost:custom-rate-hourly';
+  const customForm = document.getElementById('custom-form');
+  const customInput = document.getElementById('custom-rate');
+  const customResetBtn = document.getElementById('custom-reset');
+  const customError = document.getElementById('custom-error');
+
+  function formatHourly(n) {
+    return n % 1 === 0 ? n.toLocaleString('en-US') : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function setCustomRate(hourlyRate) {
+    const display = `$${formatHourly(hourlyRate)} / hour`;
+    TEAMS.custom = {
+      label: 'Custom',
+      icon: '✏️',
+      ratePerMinute: hourlyRate / 60,
+      displayRate: display,
+    };
+    let tab = document.querySelector('.tab[data-team="custom"]');
+    if (!tab) {
+      tab = document.createElement('button');
+      tab.className = 'tab';
+      tab.dataset.team = 'custom';
+      tab.setAttribute('role', 'tab');
+      tab.setAttribute('aria-selected', 'false');
+      tab.addEventListener('click', () => setTeam('custom'));
+      document.querySelector('.tabs').appendChild(tab);
+      tabEls = document.querySelectorAll('.tab');
+    }
+    tab.innerHTML = `<span class="tab-icon">✏️</span> Custom · $${formatHourly(hourlyRate)}/hr`;
+    // If already on custom, force a re-render since setTeam bails on same key
+    if (currentTeamKey === 'custom') {
+      rateEl.textContent = `✏️ Custom · ${display}`;
+      render();
+    } else {
+      setTeam('custom');
+    }
+    localStorage.setItem(LS_KEY, String(hourlyRate));
+  }
+
+  function clearCustomRate() {
+    delete TEAMS.custom;
+    const tab = document.querySelector('.tab[data-team="custom"]');
+    if (tab) tab.remove();
+    tabEls = document.querySelectorAll('.tab');
+    localStorage.removeItem(LS_KEY);
+    customInput.value = '';
+    customError.textContent = '';
+    if (currentTeamKey === 'custom') {
+      currentTeamKey = null; // force setTeam to apply
+      setTeam('ffp');
+    }
+  }
+
+  customForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const rate = parseFloat(customInput.value);
+    if (!isFinite(rate) || rate <= 0) {
+      customError.textContent = 'Enter a positive hourly rate.';
+      return;
+    }
+    customError.textContent = '';
+    setCustomRate(rate);
+  });
+
+  customResetBtn.addEventListener('click', clearCustomRate);
+
+  // Restore on load
+  const storedRate = parseFloat(localStorage.getItem(LS_KEY));
+  if (isFinite(storedRate) && storedRate > 0) {
+    customInput.value = storedRate;
+    setCustomRate(storedRate);
+  }
 
   function tick() {
     render();
@@ -446,7 +640,7 @@
 
   function unlockCEO() {
     ceoUnlocked = true;
-    TEAMS.ceo = { label: 'The CEO', icon: '👔', ratePerMinute: 500 };
+    TEAMS.ceo = { label: 'The CEO', icon: '👔', ratePerMinute: 500, displayRate: '$500 / minute' };
     const btn = document.createElement('button');
     btn.className = 'tab';
     btn.dataset.team = 'ceo';
