@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Persistence tests · cost.adumb.dev</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; max-width: 760px; margin: 0 auto; padding: 16px; background: #0f172a; color: #e2e8f0; line-height: 1.5; }
+    h1 { font-size: 18px; margin: 0 0 4px; }
+    .lede { color: #94a3b8; font-size: 13px; margin: 0 0 16px; }
+    .lede code { background: #1e293b; padding: 1px 4px; border-radius: 3px; }
+    .summary { padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; font-weight: 600; }
+    .summary.pending { background: #1e293b; color: #94a3b8; }
+    .summary.pass { background: #052e16; color: #4ade80; }
+    .summary.fail { background: #450a0a; color: #fca5a5; }
+    .test { padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 13px; display: flex; gap: 8px; }
+    .test.pass { color: #86efac; }
+    .test.fail { color: #fca5a5; }
+    .test .mark { flex-shrink: 0; }
+    .test .detail { color: #64748b; font-size: 11px; margin-top: 2px; }
+    iframe { width: 100%; max-width: 600px; height: 220px; border: 1px solid #334155; border-radius: 6px; margin-top: 16px; background: #0f172a; }
+    .frame-label { color: #64748b; font-size: 12px; margin: 16px 0 4px; }
+    .warn { background: #422006; color: #fcd34d; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Persistence tests</h1>
+  <p class="lede">Loads <code>index.html</code> in an iframe, drives it via clicks + synthesized <code>storage</code> events, asserts on observable DOM and <code>localStorage</code>. Same-origin only.</p>
+  <div class="warn">Heads-up: this page snapshots and restores your session keys, but if you have the live app open in another tab the test's writes will jiggle that tab's state via the cross-tab sync. Close the other tab first or accept the chaos.</div>
+
+  <div id="summary" class="summary pending">Running…</div>
+  <div id="results"></div>
+
+  <p class="frame-label">Live iframe (interactive after tests finish):</p>
+  <iframe id="frame" title="meeting-cost app under test"></iframe>
+
+  <script>
+    const SESSION_KEY = 'meeting-cost:session-v1';
+    const RATE_KEY = 'meeting-cost:custom-rate-hourly';
+    const APP_KEYS = [SESSION_KEY, RATE_KEY];
+
+    // Snapshot any real session so we don't trash the user's running meeting.
+    const snapshot = Object.fromEntries(APP_KEYS.map(k => [k, localStorage.getItem(k)]));
+    function restoreSnapshot() {
+      for (const k of APP_KEYS) {
+        const v = snapshot[k];
+        if (v === null) localStorage.removeItem(k);
+        else localStorage.setItem(k, v);
+      }
+    }
+    addEventListener('beforeunload', restoreSnapshot);
+
+    const iframe = document.getElementById('frame');
+    const resultsEl = document.getElementById('results');
+    const summaryEl = document.getElementById('summary');
+    const results = [];
+
+    function assert(name, cond, detail) {
+      results.push({ name, cond, detail });
+      const div = document.createElement('div');
+      div.className = 'test ' + (cond ? 'pass' : 'fail');
+      const mark = document.createElement('span');
+      mark.className = 'mark';
+      mark.textContent = cond ? '✓' : '✗';
+      const body = document.createElement('div');
+      body.textContent = name;
+      if (!cond && detail) {
+        const d = document.createElement('div');
+        d.className = 'detail';
+        d.textContent = detail;
+        body.appendChild(d);
+      }
+      div.append(mark, body);
+      resultsEl.appendChild(div);
+    }
+
+    function loadFrame(seed = {}) {
+      for (const k of APP_KEYS) localStorage.removeItem(k);
+      for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v);
+      return new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error('iframe load timeout (5s)')), 5000);
+        iframe.onload = () => { clearTimeout(t); resolve(iframe.contentWindow); };
+        iframe.src = 'index.html?test=1&t=' + Date.now();
+      });
+    }
+
+    function readState(win) {
+      const get = (id) => win.document.getElementById(id);
+      const tabs = [...win.document.querySelectorAll('.tab')];
+      return {
+        cost: get('cost').textContent,
+        timer: get('timer').textContent,
+        rate: get('rate').textContent,
+        startBtnText: get('start').textContent,
+        startDisabled: get('start').disabled,
+        stopDisabled: get('stop').disabled,
+        restartDisabled: get('restart').disabled,
+        activeTab: tabs.find(t => t.classList.contains('active'))?.dataset.team,
+        sessionLS: localStorage.getItem(SESSION_KEY),
+        rateLS: localStorage.getItem(RATE_KEY),
+      };
+    }
+
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    async function runTests() {
+      let win, s;
+
+      // ─── T1: fresh load ────────────────────────────────────────
+      win = await loadFrame();
+      s = readState(win);
+      assert('T1 fresh load · idle button state',
+        !s.startDisabled && s.stopDisabled && s.restartDisabled,
+        JSON.stringify({ start: s.startDisabled, stop: s.stopDisabled, restart: s.restartDisabled }));
+      assert('T1 fresh load · ffp default team', s.activeTab === 'ffp', `got: ${s.activeTab}`);
+      assert('T1 fresh load · cost is $0.00', s.cost === '$0.00', `got: ${s.cost}`);
+      assert('T1 fresh load · no localStorage written', !s.sessionLS && !s.rateLS);
+
+      // ─── T2: Start click writes a running session ─────────────
+      win.document.getElementById('start').click();
+      s = readState(win);
+      assert('T2 Start click · running button state',
+        s.startDisabled && !s.stopDisabled && !s.restartDisabled);
+      const session = JSON.parse(s.sessionLS || 'null');
+      assert('T2 Start click · session has v=1', session?.v === 1);
+      assert('T2 Start click · isRunning=true', session?.isRunning === true);
+      assert('T2 Start click · runStartedAtMs is wall-clock',
+        Math.abs(Date.now() - session?.runStartedAtMs) < 5000);
+
+      // ─── T3: Stop bakes elapsed into accumulatedMs ─────────────
+      await sleep(80);
+      win.document.getElementById('stop').click();
+      s = readState(win);
+      assert('T3 Stop · button text becomes Resume', s.startBtnText === 'Resume');
+      const stopped = JSON.parse(s.sessionLS);
+      assert('T3 Stop · accumulatedMs > 0', stopped.accumulatedMs > 0);
+      assert('T3 Stop · isRunning=false', stopped.isRunning === false);
+      assert('T3 Stop · runStartedAtMs cleared', stopped.runStartedAtMs === null);
+
+      // ─── T4: refresh after Stop preserves Resume affordance ────
+      win = await loadFrame({ [SESSION_KEY]: s.sessionLS });
+      s = readState(win);
+      assert('T4 refresh paused · Resume button', s.startBtnText === 'Resume');
+      assert('T4 refresh paused · restart enabled', !s.restartDisabled);
+
+      // ─── T5: refresh mid-run on Cowboys keeps ticking ──────────
+      const fakeRunning = JSON.stringify({
+        v: 1, teamKey: 'cowboys', accumulatedMs: 12000,
+        isRunning: true, runStartedAtMs: Date.now() - 5000, savedAtMs: Date.now() - 5000,
+      });
+      win = await loadFrame({ [SESSION_KEY]: fakeRunning });
+      s = readState(win);
+      assert('T5 mid-run refresh · cowboys active tab', s.activeTab === 'cowboys');
+      assert('T5 mid-run refresh · running button state',
+        s.startDisabled && !s.stopDisabled && !s.restartDisabled);
+      const elapsedSec = parseInt(s.timer.split(':')[1], 10);
+      assert('T5 mid-run refresh · timer near 17s',
+        elapsedSec >= 16 && elapsedSec <= 19, `got: ${s.timer}`);
+
+      // ─── T6: 24h-old running session is treated as paused ─────
+      const stale = JSON.stringify({
+        v: 1, teamKey: 'ffp', accumulatedMs: 60000,
+        isRunning: true, runStartedAtMs: Date.now() - 24 * 60 * 60 * 1000, savedAtMs: 0,
+      });
+      win = await loadFrame({ [SESSION_KEY]: stale });
+      s = readState(win);
+      assert('T6 stale 24h session · paused state',
+        s.startBtnText === 'Resume' && s.stopDisabled);
+      assert('T6 stale 24h session · accumulated 1m preserved', s.timer === '01:00');
+
+      // ─── T7: Restart clears LS and idles the UI ───────────────
+      win.document.getElementById('restart').click();
+      s = readState(win);
+      assert('T7 Restart · session removed from LS', s.sessionLS === null);
+      assert('T7 Restart · idle button state',
+        s.startBtnText === 'Start' && s.restartDisabled);
+
+      // ─── T8: corrupt JSON falls back gracefully ───────────────
+      win = await loadFrame({ [SESSION_KEY]: 'not json{[' });
+      s = readState(win);
+      assert('T8 corrupt JSON · fallback to idle',
+        s.cost === '$0.00' && s.activeTab === 'ffp' && !s.startDisabled);
+
+      // ─── T9: custom rate restore ───────────────────────────────
+      win = await loadFrame({ [RATE_KEY]: '150' });
+      s = readState(win);
+      assert('T9 custom rate · custom tab active', s.activeTab === 'custom');
+      assert('T9 custom rate · rate display contains 150', s.rate.includes('150'));
+
+      // ─── T10: cross-tab Start arrives via storage event ───────
+      win = await loadFrame();
+      const startEv = new win.StorageEvent('storage', {
+        key: SESSION_KEY,
+        newValue: JSON.stringify({
+          v: 1, teamKey: 'cowboys', accumulatedMs: 0,
+          isRunning: true, runStartedAtMs: Date.now(), savedAtMs: Date.now(),
+        }),
+        oldValue: null,
+        storageArea: win.localStorage,
+        url: win.location.href,
+      });
+      win.dispatchEvent(startEv);
+      s = readState(win);
+      assert('T10 cross-tab Start · cowboys active', s.activeTab === 'cowboys');
+      assert('T10 cross-tab Start · running button state',
+        s.startDisabled && !s.stopDisabled);
+
+      // ─── T11: cross-tab Restart (newValue=null) idles us ──────
+      const restartEv = new win.StorageEvent('storage', {
+        key: SESSION_KEY, newValue: null, storageArea: win.localStorage,
+        url: win.location.href,
+      });
+      win.dispatchEvent(restartEv);
+      s = readState(win);
+      assert('T11 cross-tab Restart · idle button state',
+        s.restartDisabled && s.stopDisabled && !s.startDisabled);
+      assert('T11 cross-tab Restart · current team preserved', s.activeTab === 'cowboys');
+
+      // ─── T12: clicking the already-active tab does NOT write ──
+      win = await loadFrame();
+      const before = localStorage.getItem(SESSION_KEY);
+      const ffpTab = [...win.document.querySelectorAll('.tab')].find(t => t.dataset.team === 'ffp');
+      ffpTab.click();
+      const after = localStorage.getItem(SESSION_KEY);
+      assert('T12 same-tab click · no redundant session write',
+        before === null && after === null,
+        `before=${before} after=${after}`);
+    }
+
+    runTests()
+      .then(() => {
+        const passed = results.filter(r => r.cond).length;
+        const failed = results.length - passed;
+        summaryEl.className = 'summary ' + (failed === 0 ? 'pass' : 'fail');
+        summaryEl.textContent = failed === 0
+          ? `✓ ${passed}/${results.length} passed`
+          : `✗ ${failed} failed · ${passed}/${results.length} passed`;
+      })
+      .catch((err) => {
+        summaryEl.className = 'summary fail';
+        summaryEl.textContent = 'Runner crashed: ' + err.message;
+      })
+      .finally(restoreSnapshot);
+  </script>
+</body>
+</html>
