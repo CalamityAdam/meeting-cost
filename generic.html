@@ -366,6 +366,7 @@
   .share {
     display: flex; gap: 0.6rem; align-items: center; justify-content: center; flex-wrap: wrap;
     margin-top: 0.5rem;
+    position: relative;
   }
   .share-link {
     background: var(--surface);
@@ -380,7 +381,15 @@
     flex: 1 1 320px;
   }
   .copied-flash {
+    /* Absolute so the flash doesn't take flex-row width — otherwise on
+       mobile (when share-link wraps) the invisible flash steals layout
+       space and pushes the Copy button left of center. */
+    position: absolute;
+    bottom: -1.4rem;
+    left: 50%;
+    transform: translateX(-50%);
     color: var(--accent); font-size: 0.8rem; opacity: 0; transition: opacity 200ms ease;
+    pointer-events: none;
   }
   .copied-flash.show { opacity: 1; }
 
