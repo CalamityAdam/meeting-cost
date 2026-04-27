@@ -358,6 +358,10 @@
     outline: none;
   }
   .settings-row select:focus, .settings-row input[type=text]:focus { border-color: var(--accent); }
+  .settings-hint {
+    color: var(--muted); font-size: 0.78rem; opacity: 0.75;
+    margin: 0.5rem auto 1.5rem; max-width: 50ch; line-height: 1.5;
+  }
 
   .share {
     display: flex; gap: 0.6rem; align-items: center; justify-content: center; flex-wrap: wrap;
@@ -472,6 +476,7 @@
         <input type="text" id="meeting-label" maxlength="40" placeholder="e.g. Standup, Board meeting" />
       </label>
     </div>
+    <p class="settings-hint">Currency switch is symbol-only — digits stay the same, no FX conversion. Type the values you want in the new currency.</p>
 
     <div class="share">
       <span id="share-link" class="share-link" aria-label="Shareable link">cost.adumb.dev/generic.html</span>
@@ -687,6 +692,7 @@
     if (startTimestamp !== null) return;
     startTimestamp = Date.now();
     startBtn.disabled = true;
+    startBtn.textContent = 'Start';
     stopBtn.disabled = false;
     restartBtn.disabled = false;
     persistSession();
@@ -1077,8 +1083,10 @@
     if (e.storageArea && e.storageArea !== localStorage) return;
     if (e.key !== SESSION_KEY) return;
     if (e.newValue === null) {
-      // Restart in another tab — applySession({}) parks us idle.
-      applySession({ source: currentSource, ratePerHour: currentRatePerHour, attendees: currentAttendees, currency: currentCurrency, label: currentLabel });
+      // Restart in another tab. applySession({}) leaves the local rate /
+      // currency / label untouched (those branches early-bail on missing
+      // fields) and parks the timer idle with accumulatedMs = 0.
+      applySession({});
     } else {
       try { applySession(JSON.parse(e.newValue)); } catch {}
     }
@@ -1093,6 +1101,10 @@
   const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
   let konamiIdx = 0;
   window.addEventListener('keydown', (e) => {
+    // Don't intercept typing in form fields — typing the literal sequence
+    // ↑↑↓↓←→←→ba into the meeting label shouldn't trigger the easter egg.
+    const tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     konamiIdx = (key === KONAMI[konamiIdx]) ? konamiIdx + 1 : 0;
     if (konamiIdx === KONAMI.length) {

@@ -396,12 +396,13 @@
       assert('B17 URL ?a=3x90,1x130 · rate = $400/hr',
         s.rateValue.includes('400'), `got: ${s.rateValue}`);
 
-      // B18: URL ?a with row exceeding cap → that row dropped, others applied
+      // B18: URL ?a with row exceeding cap → that row dropped, valid row applied
+      // (2 × $50 = $100/hr; the 99999×99999 row is silently dropped by validation)
       win = await loadFrame({}, 'a=2x50,99999x99999');
       s = readState(win);
       assert('B18 URL ?a · oversized row dropped, valid row applied',
-        s.rateValue.includes('100') || s.rateValue.includes('60'),
-        `got: "${s.rateValue}"`);
+        s.rateValue.includes('100'),
+        `expected $100/hr from valid row, got: "${s.rateValue}"`);
 
       // B19: localStorage with rate > cap → fallback to default
       const huge = JSON.stringify({
@@ -424,6 +425,50 @@
       s = readState(win);
       assert('B20 LS rate=null · falls back to default',
         s.rateValue.includes('60'), `got: ${s.rateValue}`);
+
+      // B21: attendees-source session restored from LS — rate AND draft rows seeded
+      const attendeesSession = JSON.stringify({
+        v: 1, source: 'attendees',
+        ratePerHour: 3 * 90 + 1 * 130, // $400/hr
+        attendees: [
+          { role: 'Engineers', count: 3, rate: 90 },
+          { role: 'PM',        count: 1, rate: 130 },
+        ],
+        currency: 'USD', label: '',
+        accumulatedMs: 0, isRunning: false, runStartedAtMs: null, savedAtMs: Date.now(),
+      });
+      win = await loadFrame({ [SESSION_KEY]: attendeesSession });
+      s = readState(win);
+      assert('B21 LS attendees-source · rate restored to $400/hr',
+        s.rateValue.includes('400'), `got: "${s.rateValue}"`);
+      const draftCount = win.document.querySelectorAll('#attendee-rows .row').length;
+      assert('B21 LS attendees-source · builder seeded with 2 rows',
+        draftCount === 2, `got: ${draftCount} rows`);
+      const firstRoleVal = win.document.querySelector('#attendee-rows .row input.role')?.value;
+      assert('B21 LS attendees-source · role labels preserved',
+        firstRoleVal === 'Engineers', `got: "${firstRoleVal}"`);
+
+      // B22: Elon Mode is NOT persisted (mirrors the CEO opt-out in index.html)
+      win = await loadFrame();
+      s = readState(win);
+      assert('B22 setup · LS empty before Konami', s.sessionLS === null || s.sessionLS === undefined);
+      const konami = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+      for (const k of konami) {
+        win.dispatchEvent(new win.KeyboardEvent('keydown', { key: k, bubbles: true }));
+      }
+      s = readState(win);
+      assert('B22 Konami · Elon Mode label visible',
+        /elon/i.test(s.rateValue), `got: "${s.rateValue}"`);
+      assert('B22 Konami · session NOT written to LS',
+        s.sessionLS === null,
+        `expected null, got: ${s.sessionLS && s.sessionLS.slice(0, 80)}`);
+      // And it shouldn't write on subsequent ticks either — Start triggers persistSession
+      // but persistSession early-returns when source === 'elon'.
+      win.document.getElementById('start').click();
+      s = readState(win);
+      assert('B22 Konami + Start · still no session written',
+        s.sessionLS === null,
+        `expected null, got: ${s.sessionLS && s.sessionLS.slice(0, 80)}`);
 
       group('Currency, presets, share');
 
