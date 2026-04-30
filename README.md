@@ -1,14 +1,16 @@
-# Meeting Cost-o-Meter
+# lesstalk.ing — your meeting is burning money
 
-A single-page meeting cost calculator. $40/minute, ticking in real time, with an escalating mood that goes from ☕ to 🔥 as the dollars pile up.
+A single-page meeting cost calculator. Set a rate, build the bill by attendee, or just watch the dollars climb. The page reacts as the cost piles up.
 
-Live at **[cost.adumb.dev](https://cost.adumb.dev)**.
+Live at **[lesstalk.ing](https://lesstalk.ing)**.
 
 Open `index.html` in a browser, or deploy the folder as a static site (Vercel, Netlify, GitHub Pages — no build step).
 
 ## Features
 
-- Pick a team rate or set your own custom hourly rate.
+- Set your hourly rate, or build it by attendee (count × rate per role).
+- Currency switch (USD/EUR/GBP/JPY/etc.) — symbol-only, no FX conversion.
+- Shareable link encodes your rate setup so anyone can join the same meter.
 - Timer survives refreshes, tab closes, and browser restarts. Multiple tabs stay in sync via the `storage` event.
 - 12h stale-session guard so a forgotten meeting doesn't rack up a fake $50k.
 

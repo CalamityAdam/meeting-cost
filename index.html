@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Meeting Cost-o-Meter — watch your meeting burn $40/min</title>
-<meta name="description" content="A live meeting cost calculator. Starts at $0, climbs in real time, and reacts with increasing panic as the dollars pile up." />
+<title>lesstalk.ing — your meeting is burning money</title>
+<meta name="description" content="A live meeting cost calculator. Set a rate or build it by attendee. Watch the dollars climb in real time, with the page reacting as the cost piles up." />
 <meta name="theme-color" content="#0f172a" />
 <meta name="color-scheme" content="dark" />
 
@@ -12,18 +12,19 @@
 <link rel="apple-touch-icon" href="favicon.svg" />
 
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Meeting Cost-o-Meter" />
-<meta property="og:description" content="Watch your meeting burn $40 / minute in real time." />
-<meta property="og:url" content="https://cost.adumb.dev/" />
-<meta property="og:image" content="https://cost.adumb.dev/og-card.png" />
+<meta property="og:title" content="lesstalk.ing — your meeting is burning money" />
+<meta property="og:description" content="Watch your meeting burn money in real time. Set a rate or build it by attendee." />
+<meta property="og:url" content="https://lesstalk.ing/" />
+<meta property="og:image" content="https://lesstalk.ing/og-card.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:site_name" content="cost.adumb.dev" />
+<meta property="og:site_name" content="lesstalk.ing" />
 
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Meeting Cost-o-Meter" />
-<meta name="twitter:description" content="Watch your meeting burn $40 / minute in real time." />
-<meta name="twitter:image" content="https://cost.adumb.dev/og-card.png" />
+<meta name="twitter:title" content="lesstalk.ing — your meeting is burning money" />
+<meta name="twitter:description" content="Watch your meeting burn money in real time. Set a rate or build it by attendee." />
+<meta name="twitter:image" content="https://lesstalk.ing/og-card.png" />
+
 <style>
   :root {
     --bg: #0f172a;
@@ -31,6 +32,8 @@
     --muted: #94a3b8;
     --accent: #22d3ee;
     --danger: #ef4444;
+    --surface: rgba(255, 255, 255, 0.05);
+    --border: rgba(255, 255, 255, 0.12);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; }
@@ -44,6 +47,9 @@
     min-height: 100vh;
     transition: background-color 600ms ease;
   }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
   .hero {
     width: 100%;
     min-height: 100vh;
@@ -54,6 +60,145 @@
     padding: 2rem 1rem;
     position: relative;
   }
+  h1 {
+    font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0 0 1.25rem;
+  }
+
+  .cost {
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: clamp(3.5rem, 16vw, 13rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(255,255,255,0.15);
+    transition: color 400ms ease, transform 200ms ease;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+  .timer {
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 1.5rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+  }
+
+  .rate-line {
+    margin-top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .rate-display {
+    color: var(--muted);
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .rate-display strong { color: var(--fg); font-weight: 600; }
+  .rate-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .input-wrap {
+    display: inline-flex;
+    align-items: center;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    padding: 0.3rem 0.9rem;
+    transition: border-color 150ms ease;
+  }
+  .input-wrap:focus-within { border-color: var(--accent); }
+  .input-wrap .symbol,
+  .input-wrap .suffix {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+  .input-wrap .suffix { margin-left: 0.3rem; }
+  .input-wrap input {
+    background: transparent;
+    border: none;
+    color: var(--fg);
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    width: 5.5rem;
+    outline: none;
+    padding: 0.3rem 0.2rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .input-wrap input::-webkit-outer-spin-button,
+  .input-wrap input::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+  .input-wrap input[type=number] { -moz-appearance: textfield; }
+  .rate-form input.count { width: 4rem; }
+
+  .mood {
+    margin-top: 1.5rem;
+    min-height: 5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .mood .emoji { font-size: 3rem; transition: transform 300ms ease; }
+  .mood .message {
+    font-size: 1.1rem;
+    color: var(--fg);
+    opacity: 0.85;
+    font-style: italic;
+    max-width: 32ch;
+  }
+
+  .controls {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  button {
+    font: inherit;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.7rem 1.4rem;
+    border: 2px solid var(--fg);
+    background: transparent;
+    color: var(--fg);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease, transform 100ms ease;
+    min-width: 5.5rem;
+  }
+  button:hover:not(:disabled) { background: var(--fg); color: var(--bg); }
+  button:active:not(:disabled) { transform: scale(0.96); }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+  button.primary { border-color: var(--accent); color: var(--accent); }
+  button.primary:hover:not(:disabled) { background: var(--accent); color: var(--bg); }
+  button.danger { border-color: var(--danger); color: var(--danger); }
+  button.danger:hover:not(:disabled) { background: var(--danger); color: var(--fg); }
+  button.ghost {
+    border-color: var(--border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 0.45rem 0.9rem;
+    min-width: 0;
+  }
+  button.ghost:hover:not(:disabled) { background: var(--surface); color: var(--fg); }
+
   .scroll-hint {
     position: absolute;
     bottom: 1.5rem;
@@ -72,165 +217,28 @@
     0%, 100% { transform: translate(-50%, 0); }
     50% { transform: translate(-50%, 5px); }
   }
-  .ticker {
-    margin: 0 0 2rem;
-    padding: 0.85rem 1.25rem;
-    border: 1px solid rgba(251, 191, 36, 0.25);
-    background: rgba(0, 0, 0, 0.35);
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 0 40px rgba(251, 191, 36, 0.08);
-  }
-  .ticker-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.3rem;
-  }
-  .ticker-value {
-    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
-    font-size: clamp(1.4rem, 3.2vw, 2.2rem);
-    font-weight: 700;
-    color: #fbbf24;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
-    text-shadow: 0 0 20px rgba(251, 191, 36, 0.35);
-  }
-  .ticker-status {
-    margin-top: 0.4rem;
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    font-style: italic;
-  }
-  h1 {
-    font-size: clamp(1.2rem, 2.5vw, 1.6rem);
-    font-weight: 500;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin: 0 0 0.5rem;
-  }
-  .tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.25rem;
-    padding: 0.25rem;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 999px;
-  }
-  .tab {
-    font: inherit;
-    font-weight: 600;
-    font-size: 0.95rem;
-    padding: 0.5rem 1.1rem;
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background 200ms ease, color 200ms ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    min-width: auto;
-  }
-  .tab:hover:not(.active) { color: var(--fg); background: transparent; }
-  .tab.active {
-    background: var(--fg);
-    color: var(--bg);
-  }
-  .tab .tab-icon { font-size: 1.1rem; }
-  .rate {
-    color: var(--muted);
-    font-size: 0.9rem;
-    margin-bottom: 2rem;
-  }
-  .cost {
-    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
-    font-size: clamp(4rem, 18vw, 14rem);
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 1;
-    text-shadow: 0 0 40px rgba(255,255,255,0.15);
-    transition: color 400ms ease, transform 200ms ease;
-  }
-  .timer {
-    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
-    font-size: 1.5rem;
-    color: var(--muted);
-    margin-top: 0.5rem;
-  }
-  .mood {
-    margin-top: 2rem;
-    min-height: 5rem;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .mood .emoji {
-    font-size: 3rem;
-    transition: transform 300ms ease;
-  }
-  .mood .message {
-    font-size: 1.1rem;
-    color: var(--fg);
-    opacity: 0.85;
-    font-style: italic;
-    max-width: 30ch;
-  }
-  .controls {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 2.5rem;
-  }
-  button {
-    font: inherit;
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 0.75rem 1.5rem;
-    border: 2px solid var(--fg);
-    background: transparent;
-    color: var(--fg);
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background 150ms ease, color 150ms ease, transform 100ms ease;
-    min-width: 6rem;
-  }
-  button:hover:not(:disabled) { background: var(--fg); color: var(--bg); }
-  button:active:not(:disabled) { transform: scale(0.96); }
-  button:disabled { opacity: 0.35; cursor: not-allowed; }
-  button.primary { border-color: var(--accent); color: var(--accent); }
-  button.primary:hover:not(:disabled) { background: var(--accent); color: var(--bg); }
-  button.danger { border-color: var(--danger); color: var(--danger); }
-  button.danger:hover:not(:disabled) { background: var(--danger); color: var(--fg); }
-  .pulse {
-    animation: pulse 600ms ease;
-  }
+
+  /* Animations on the cost number */
+  .pulse { animation: pulse 600ms ease; }
   @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.04); }
-    100% { transform: scale(1); }
+    0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); }
   }
-  .shake {
-    animation: shake 400ms ease;
-  }
+  .shake { animation: shake 400ms ease; }
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-8px); }
     75% { transform: translateX(8px); }
   }
-  .custom-section {
+
+  /* Below-the-fold sections */
+  section.panel {
     width: 100%;
-    max-width: 520px;
-    padding: 3rem 1.5rem 5rem;
+    max-width: 720px;
+    padding: 3rem 1.5rem;
     text-align: center;
     margin: 0 auto;
   }
-  .custom-section h2 {
+  section.panel h2 {
     font-size: 1rem;
     font-weight: 500;
     color: var(--muted);
@@ -238,65 +246,161 @@
     letter-spacing: 0.15em;
     margin: 0 0 0.75rem;
   }
-  .custom-section .blurb {
+  section.panel .blurb {
     color: var(--muted);
     font-size: 0.95rem;
     line-height: 1.55;
-    margin-bottom: 1.75rem;
+    margin: 0 auto 1.75rem;
+    max-width: 50ch;
   }
-  .custom-form {
-    display: flex;
+
+  .presets {
+    display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  .preset {
+    border-color: var(--border);
+    color: var(--fg);
+    font-size: 0.9rem;
+    padding: 0.55rem 1rem;
+    min-width: 0;
+  }
+  .preset:hover:not(:disabled) { background: var(--surface); border-color: var(--accent); color: var(--fg); }
+
+  .builder {
+    display: flex; flex-direction: column; gap: 0.6rem;
+    margin: 0 auto 1rem;
+    max-width: 520px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto auto auto;
     gap: 0.5rem;
     align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.5rem 0.75rem;
   }
-  .input-wrap {
-    display: flex;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.12);
-    border-radius: 999px;
-    padding: 0.35rem 1rem;
-    transition: border-color 150ms ease;
-  }
-  .input-wrap:focus-within { border-color: var(--accent); }
-  .input-wrap .dollar,
-  .input-wrap .per-hour {
-    color: var(--muted);
-    font-size: 0.95rem;
-  }
-  .input-wrap .per-hour { margin-left: 0.3rem; }
-  .input-wrap input {
+  .row input.role {
     background: transparent;
     border: none;
     color: var(--fg);
     font: inherit;
-    font-size: 1rem;
-    font-weight: 600;
-    width: 5.5rem;
+    font-size: 0.95rem;
     outline: none;
-    padding: 0.4rem 0.2rem;
-    font-variant-numeric: tabular-nums;
+    min-width: 0;
+    width: 100%;
+    padding: 0.3rem 0.2rem;
   }
-  .input-wrap input::-webkit-outer-spin-button,
-  .input-wrap input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  .row input.role::placeholder { color: var(--muted); opacity: 0.7; }
+  .row .num-wrap {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(0,0,0,0.25);
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+    border: 1px solid var(--border);
   }
-  .input-wrap input[type=number] { -moz-appearance: textfield; }
-  .custom-section .error {
+  .row .num-wrap input {
+    background: transparent; border: none; color: var(--fg);
+    font: inherit; font-size: 0.95rem; font-weight: 600;
+    outline: none; font-variant-numeric: tabular-nums;
+    padding: 0.25rem 0.1rem;
+  }
+  .row .num-wrap input::-webkit-outer-spin-button,
+  .row .num-wrap input::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+  .row .num-wrap input[type=number] { -moz-appearance: textfield; }
+  .row .num-wrap input.count-input { width: 3rem; }
+  .row .num-wrap input.rate-input { width: 5rem; }
+  .row .num-wrap .label { color: var(--muted); font-size: 0.8rem; }
+  .row .remove {
+    background: transparent; border: none; color: var(--muted);
+    cursor: pointer; font-size: 1.2rem; padding: 0.2rem 0.4rem;
+    border-radius: 6px; min-width: 0;
+  }
+  .row .remove:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+
+  .builder-summary {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; margin: 0.75rem auto 0;
+    max-width: 520px;
+    color: var(--muted); font-size: 0.95rem;
+  }
+  .builder-summary .total { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .builder-actions {
+    display: flex; gap: 0.6rem; justify-content: center; margin-top: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .error {
     color: var(--danger);
     font-size: 0.85rem;
     margin-top: 0.75rem;
     min-height: 1.25rem;
   }
-  .custom-section .footnote {
-    font-size: 0.75rem;
-    color: var(--muted);
-    opacity: 0.7;
-    margin-top: 1.5rem;
+
+  .settings-row {
+    display: flex; gap: 1rem; align-items: center; justify-content: center;
+    flex-wrap: wrap; margin-bottom: 1rem;
   }
+  .settings-row label { color: var(--muted); font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem; }
+  .settings-row select, .settings-row input[type=text] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--fg);
+    font: inherit; font-size: 0.9rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 8px;
+    outline: none;
+  }
+  .settings-row select:focus, .settings-row input[type=text]:focus { border-color: var(--accent); }
+  .settings-hint {
+    color: var(--muted); font-size: 0.78rem; opacity: 0.75;
+    margin: 0.5rem auto 1.5rem; max-width: 50ch; line-height: 1.5;
+  }
+
+  .share {
+    display: flex; gap: 0.6rem; align-items: center; justify-content: center; flex-wrap: wrap;
+    margin-top: 0.5rem;
+    position: relative;
+  }
+  .share-link {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 0.5rem 0.8rem;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 100%;
+    flex: 1 1 320px;
+  }
+  .copied-flash {
+    /* Absolute so the flash doesn't take flex-row width — otherwise on
+       mobile (when share-link wraps) the invisible flash steals layout
+       space and pushes the Copy button left of center. */
+    position: absolute;
+    bottom: -1.4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--accent); font-size: 0.8rem; opacity: 0; transition: opacity 200ms ease;
+    pointer-events: none;
+  }
+  .copied-flash.show { opacity: 1; }
+
+  footer {
+    width: 100%; padding: 2rem 1rem; text-align: center;
+    color: var(--muted); font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+  }
+  footer .built-by { margin-bottom: 0.25rem; }
+  footer .footnote { font-size: 0.75rem; opacity: 0.7; margin-top: 0.5rem; }
+
   .money-drop {
     position: fixed;
     top: -2rem;
@@ -314,27 +418,26 @@
 </head>
 <body>
   <main class="hero">
-    <div class="ticker" aria-live="off">
-      <div class="ticker-label">Total Free 1st Party Cost</div>
-      <div id="ticker-value" class="ticker-value">$6,000,000.00</div>
-      <div id="ticker-status" class="ticker-status" aria-live="polite" hidden></div>
-    </div>
-
-    <h1>Meeting Cost-o-Meter</h1>
-
-    <div class="tabs" role="tablist" aria-label="Team rate">
-      <button class="tab active" data-team="ffp" role="tab" aria-selected="true">
-        <span class="tab-icon">🏎️</span> Free 1st Party
-      </button>
-      <button class="tab" data-team="cowboys" role="tab" aria-selected="false">
-        <span class="tab-icon">🤠</span> Space Cowboys
-      </button>
-    </div>
-
-    <div id="rate" class="rate">🏎️ Free 1st Party · $40 / minute</div>
+    <h1>Meeting Cost Calculator</h1>
 
     <div id="cost" class="cost">$0.00</div>
     <div id="timer" class="timer">00:00</div>
+
+    <div class="rate-line">
+      <div id="rate-display" class="rate-display">
+        <span id="rate-label">Rate:</span>
+        <strong id="rate-value">$60.00 / hour</strong>
+      </div>
+      <form id="rate-form" class="rate-form" autocomplete="off">
+        <span class="input-wrap">
+          <span class="symbol" id="rate-symbol">$</span>
+          <input type="number" id="rate-input" min="0" step="0.01" inputmode="decimal" placeholder="60" aria-label="Hourly rate" />
+          <span class="suffix">/ hour</span>
+        </span>
+        <button type="submit" class="primary">Apply</button>
+      </form>
+      <div id="rate-error" class="error" role="alert"></div>
+    </div>
 
     <div class="mood">
       <div id="mood-emoji" class="emoji">☕</div>
@@ -347,532 +450,276 @@
       <button id="restart" disabled>Restart</button>
     </div>
 
-    <div class="scroll-hint">▼ Custom rate below</div>
+    <div class="scroll-hint">▼ Build it by attendee · presets · settings</div>
   </main>
 
-  <section class="custom-section" id="custom-section">
-    <h2>✏️ Bring Your Own Rate</h2>
-    <p class="blurb">Billing $150/hr? Your attorney at $500? Your contractor at $85? Plug it in — a ✏️ Custom tab appears up top.</p>
-    <form class="custom-form" id="custom-form">
-      <div class="input-wrap">
-        <span class="dollar">$</span>
-        <input type="number" id="custom-rate" min="0" step="0.01" placeholder="150" aria-label="Hourly rate in dollars" inputmode="decimal" />
-        <span class="per-hour">/ hour</span>
-      </div>
-      <button type="submit" class="primary">Apply</button>
-      <button type="button" id="custom-reset">Reset</button>
-    </form>
-    <div class="error" id="custom-error" role="alert"></div>
-    <p class="footnote">Saved in your browser only — no server, no tracking.</p>
+  <section class="panel" id="builder-panel">
+    <h2>👥 Build it by attendee</h2>
+    <p class="blurb">Real meetings have multiple people at different rates. Stack rows for engineers, PMs, lawyers, whoever. The total $/hour feeds the meter at the top.</p>
+
+    <div class="presets" id="presets" aria-label="Meeting presets"></div>
+
+    <div class="builder" id="attendee-rows" aria-label="Attendee rows"></div>
+
+    <div class="builder-summary">
+      <button type="button" id="add-row" class="ghost">+ Add row</button>
+      <div>Total: <span id="builder-total" class="total">$0.00 / hour</span></div>
+    </div>
+
+    <div class="builder-actions">
+      <button type="button" id="apply-builder" class="primary">Apply to meter</button>
+      <button type="button" id="clear-builder" class="ghost">Clear</button>
+    </div>
+
+    <div id="builder-error" class="error" role="alert"></div>
   </section>
 
+  <section class="panel" id="settings-panel">
+    <h2>⚙️ Settings &amp; sharing</h2>
+
+    <div class="settings-row">
+      <label>Currency
+        <select id="currency"></select>
+      </label>
+      <label>Label (optional)
+        <input type="text" id="meeting-label" maxlength="40" placeholder="e.g. Standup, Board meeting" />
+      </label>
+    </div>
+    <p class="settings-hint">Currency switch is symbol-only — digits stay the same, no FX conversion. Type the values you want in the new currency.</p>
+
+    <div class="share">
+      <span id="share-link" class="share-link" aria-label="Shareable link">lesstalk.ing</span>
+      <button type="button" id="copy-share" class="primary">🔗 Copy link</button>
+      <span id="copied-flash" class="copied-flash" aria-live="polite">Copied!</span>
+    </div>
+
+    <p class="blurb" style="margin-top:1.5rem; font-size: 0.8rem;">
+      Saved in your browser only — no server, no tracking.
+    </p>
+  </section>
+
+  <footer>
+    <div class="built-by">
+      Built by <a href="https://github.com/CalamityAdam" target="_blank" rel="noopener">@CalamityAdam</a>
+      · <a href="https://github.com/CalamityAdam/meeting-cost" target="_blank" rel="noopener">Source on GitHub</a>
+    </div>
+    <div class="footnote">Open source · zero tracking · works offline · ↑↑↓↓←→←→BA</div>
+  </footer>
+
 <script>
-  const TEAMS = {
-    ffp:     { label: 'Free 1st Party', icon: '🏎️', ratePerMinute: 40, displayRate: '$40 / minute' },
-    cowboys: { label: 'Space Cowboys',  icon: '🤠', ratePerMinute: 10, displayRate: '$10 / minute' },
-  };
-  let currentTeamKey = 'ffp';
-  const ratePerMs = () => TEAMS[currentTeamKey].ratePerMinute / 60 / 1000;
+  // ─── constants ────────────────────────────────────────────────────────
+  const MAX_HOURLY_RATE = 1_000_000;       // $1M/hr cap on user input
+  const MAX_ATTENDEE_COUNT = 10_000;       // per-row headcount cap
+  const MAX_ATTENDEE_ROWS = 50;            // total row cap
+  const MIN_HOURLY_RATE = 0.01;            // strictly positive
+  const COMPACT_THRESHOLD = 1_000_000_000; // ≥ $1B → compact notation
+  const STALE_AFTER_MS = 12 * 60 * 60 * 1000;
+  const SESSION_KEY = 'meeting-cost:generic-session-v1';
+  const DEFAULT_RATE = 60;
+  const DEFAULT_CURRENCY = 'USD';
 
-  // FFP debt clock: $6M base + $40/min, accruing only during Central-Time
-  // working hours (Mon–Fri 8a–5p, lunch 11:30a–12:30p, no holidays/weekends).
-  const FFP_BASE_DOLLARS = 6_000_000;
-  const FFP_RATE_PER_MS = 40 / 60 / 1000;
-  const FFP_EPOCH_MS = Date.parse('2026-04-01T00:00:00-05:00');
-  const FFP_EPOCH_DATE = '2026-04-01';
-  const MS_PER_MINUTE = 60 * 1000;
-  const WORK_START_MIN = 7 * 60;        // 07:00
-  const LUNCH_START_MIN = 11 * 60 + 30; // 11:30
-  const LUNCH_END_MIN = 12 * 60 + 30;   // 12:30
-  const WORK_END_MIN = 16 * 60;         // 16:00
-  const WORK_DAY_MIN = (LUNCH_START_MIN - WORK_START_MIN) + (WORK_END_MIN - LUNCH_END_MIN); // 480
-  const WORK_DAY_MS = WORK_DAY_MIN * MS_PER_MINUTE;
+  // Mood ladder is duration-based (in minutes elapsed) so it works at any rate.
+  // Each tier: { upToMinutes, key, emoji, message, bgColor, costColor, animate }
+  const MOOD_TIERS = [
+    { upTo: 0,       key: 'idle',     emoji: '☕', message: 'Ready when you are.',                                bg: '#0f172a', color: '#f8fafc', anim: null },
+    { upTo: 1,       key: 'warmup',   emoji: '🙂', message: 'Small talk phase. Harmless.',                          bg: '#0f172a', color: '#cbd5e1', anim: 'pulse' },
+    { upTo: 5,       key: 'coffee',   emoji: '☕', message: "Productive discussion in progress. Hopefully.",       bg: '#134e4a', color: '#5eead4', anim: 'pulse' },
+    { upTo: 10,      key: 'lunch',    emoji: '🌯', message: "You just bought everyone lunch.",                     bg: '#155e75', color: '#67e8f9', anim: 'pulse' },
+    { upTo: 20,      key: 'email',    emoji: '🧾', message: "This could have been an email.",                      bg: '#1e3a8a', color: '#93c5fd', anim: 'pulse' },
+    { upTo: 30,      key: 'dinner',   emoji: '🍷', message: "A nice dinner out. Gone.",                            bg: '#581c87', color: '#d8b4fe', anim: 'pulse' },
+    { upTo: 45,      key: 'oof',      emoji: '😬', message: "Somebody should wrap this up.",                       bg: '#7c2d12', color: '#fdba74', anim: 'pulse' },
+    { upTo: 60,      key: 'flight',   emoji: '✈️', message: "That's a round-trip plane ticket.",                  bg: '#991b1b', color: '#fca5a5', anim: 'pulse' },
+    { upTo: 90,      key: 'panic',    emoji: '🚨', message: "THIS BETTER BE IMPORTANT.",                            bg: '#b91c1c', color: '#ffffff', anim: 'shake' },
+    { upTo: 120,     key: 'rent',     emoji: '🏠', message: "You just spent a week of rent. Leave.",               bg: '#dc2626', color: '#ffffff', anim: 'shake' },
+    { upTo: Infinity,key: 'inferno',  emoji: '🔥', message: "Run. Just run.",                                       bg: '#450a0a', color: '#fbbf24', anim: 'shake' },
+  ];
 
-  // Holidays keyed by Central-Time YYYY-MM-DD. Value = status message.
-  const HOLIDAYS = {
-    // 2026
-    '2026-04-03': 'Observing Good Friday ✝️',
-    '2026-05-25': 'Honoring fallen heroes 🎖️',
-    '2026-07-03': 'Grilling for the Fourth 🇺🇸',
-    '2026-09-07': 'Laboring not, on Labor Day 🛠️',
-    '2026-11-26': 'Carving the bird 🦃',
-    '2026-11-27': 'Recovering from the bird 🛍️',
-    '2026-12-24': 'Tucking in for Santa 🎁',
-    '2026-12-25': 'Celebrating the birth of Jesus 🎄',
-    '2026-12-31': 'Counting down to a new year 🎆',
-    // 2027
-    '2027-01-01': 'Nursing a new-year hangover 🥂',
-    '2027-01-04': 'Stretching the new-year weekend 🎊',
-    '2027-03-26': 'Observing Good Friday ✝️',
-    '2027-05-31': 'Honoring fallen heroes 🎖️',
-    '2027-07-05': 'Grilling for the Fourth 🇺🇸',
-    '2027-09-06': 'Laboring not, on Labor Day 🛠️',
-    '2027-11-25': 'Carving the bird 🦃',
-    '2027-11-26': 'Recovering from the bird 🛍️',
-    '2027-12-24': 'Tucking in for Santa 🎁',
-    // Christmas Day 2027 falls on Saturday — already a weekend.
-    '2027-12-31': 'Counting down to a new year 🎆',
-  };
+  // Currency table — symbol used in the rate input prefix.
+  // For display, we use Intl.NumberFormat with the code; the symbol here is just for the input UI.
+  const CURRENCIES = [
+    { code: 'USD', symbol: '$',  label: 'USD ($)' },
+    { code: 'EUR', symbol: '€',  label: 'EUR (€)' },
+    { code: 'GBP', symbol: '£',  label: 'GBP (£)' },
+    { code: 'JPY', symbol: '¥',  label: 'JPY (¥)' },
+    { code: 'CAD', symbol: 'C$', label: 'CAD (C$)' },
+    { code: 'AUD', symbol: 'A$', label: 'AUD (A$)' },
+    { code: 'INR', symbol: '₹',  label: 'INR (₹)' },
+    { code: 'BRL', symbol: 'R$', label: 'BRL (R$)' },
+    { code: 'MXN', symbol: 'M$', label: 'MXN (M$)' },
+  ];
 
-  const WEEKEND_MSG = 'Weekend mode — see you Monday 🛋️';
-  const LUNCH_MSG = 'Out for lunch 🥪';
-  const BEFORE_HOURS_MSG = 'Office isn’t open yet ☕';
-  const AFTER_HOURS_MSG = 'Closed for the day — back at 7 🌙';
+  // Presets — recognizable meeting shapes. Counts/rates are in the active currency
+  // (preset rates are USD-flavored numbers; switching currency keeps the digits but
+  // changes the symbol — these are vibes, not FX rates).
+  const PRESETS = [
+    { id: 'standup',    label: '☕ Standup',          rows: [{ role: 'Engineers', count: 5,   rate: 95 }] },
+    { id: 'sprint',     label: '🧠 Sprint planning',  rows: [
+      { role: 'Engineers', count: 5, rate: 95 },
+      { role: 'PM',        count: 1, rate: 130 },
+      { role: 'Designer',  count: 1, rate: 110 },
+      { role: 'EM',        count: 1, rate: 150 },
+    ] },
+    { id: 'allhands',   label: '📣 All-hands (100)',  rows: [{ role: 'Everyone', count: 100, rate: 100 }] },
+    { id: 'board',      label: '🏛️ Board meeting',    rows: [{ role: 'Execs',    count: 8,   rate: 300 }] },
+    { id: 'lawyer',     label: '⚖️ Lawyer + 2 clients', rows: [
+      { role: 'Lawyer',  count: 1, rate: 450 },
+      { role: 'Clients', count: 2, rate: 80 },
+    ] },
+    { id: 'two-engs',   label: '👯 Two engineers',    rows: [{ role: 'Engineers', count: 2, rate: 90 }] },
+  ];
 
-  const centralPartsFmt = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Chicago',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-    weekday: 'short', hour12: false,
-  });
-
-  function centralParts(ts) {
-    const out = {};
-    for (const p of centralPartsFmt.formatToParts(ts)) {
-      if (p.type !== 'literal') out[p.type] = p.value;
-    }
-    // hour12:false can render midnight as "24" in some engines.
-    const hour = out.hour === '24' ? 0 : parseInt(out.hour, 10);
-    return {
-      iso: `${out.year}-${out.month}-${out.day}`,
-      weekday: out.weekday,
-      minuteOfDay: hour * 60 + parseInt(out.minute, 10),
-      secondOfMinute: parseInt(out.second, 10),
-    };
-  }
-
-  function isWeekend(weekday) {
-    return weekday === 'Sat' || weekday === 'Sun';
-  }
-
-  // ms accrued today inside the two work windows, given current minute-of-day.
-  function activeMsToday(minuteOfDay, secondOfMinute) {
-    const nowMs = minuteOfDay * MS_PER_MINUTE + secondOfMinute * 1000;
-    const segments = [
-      [WORK_START_MIN * MS_PER_MINUTE, LUNCH_START_MIN * MS_PER_MINUTE],
-      [LUNCH_END_MIN * MS_PER_MINUTE, WORK_END_MIN * MS_PER_MINUTE],
-    ];
-    let acc = 0;
-    for (const [start, end] of segments) {
-      if (nowMs <= start) break;
-      acc += Math.min(nowMs, end) - start;
-      if (nowMs < end) break;
-    }
-    return acc;
-  }
-
-  // Increment a YYYY-MM-DD string by one calendar day. Uses UTC math, but the
-  // string is just a date label so DST doesn't affect the result.
-  function nextDate(iso) {
-    const d = new Date(iso + 'T00:00:00Z');
-    d.setUTCDate(d.getUTCDate() + 1);
-    return d.toISOString().slice(0, 10);
-  }
-
-  function weekdayOfIso(iso) {
-    // Pin to noon UTC so timezone offsets can't shift the weekday.
-    const d = new Date(iso + 'T12:00:00Z');
-    return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getUTCDay()];
-  }
-
-  // Counts completed working days from FFP_EPOCH_DATE up to (not including)
-  // todayIso. Cached because it only changes when the local date rolls over.
-  let cachedCompletedDays = null;
-  let cachedCompletedFor = null;
-  function completedWorkDays(todayIso) {
-    if (cachedCompletedFor === todayIso) return cachedCompletedDays;
-    let count = 0;
-    let cursor = FFP_EPOCH_DATE;
-    while (cursor < todayIso) {
-      const wd = weekdayOfIso(cursor);
-      if (!isWeekend(wd) && !HOLIDAYS[cursor]) count++;
-      cursor = nextDate(cursor);
-    }
-    cachedCompletedFor = todayIso;
-    cachedCompletedDays = count;
-    return count;
-  }
-
-  function pauseStatus(parts) {
-    if (HOLIDAYS[parts.iso]) return HOLIDAYS[parts.iso];
-    if (isWeekend(parts.weekday)) return WEEKEND_MSG;
-    if (parts.minuteOfDay < WORK_START_MIN) return BEFORE_HOURS_MSG;
-    if (parts.minuteOfDay >= LUNCH_START_MIN && parts.minuteOfDay < LUNCH_END_MIN) return LUNCH_MSG;
-    if (parts.minuteOfDay >= WORK_END_MIN) return AFTER_HOURS_MSG;
-    return null;
-  }
-
-  const currencyFmt = new Intl.NumberFormat('en-US', {
-    style: 'currency', currency: 'USD',
-    minimumFractionDigits: 2, maximumFractionDigits: 2,
-  });
-  const tickerEl = document.getElementById('ticker-value');
-  const tickerStatusEl = document.getElementById('ticker-status');
-
-  function renderTicker() {
-    const now = Date.now();
-    if (now < FFP_EPOCH_MS) {
-      tickerEl.textContent = currencyFmt.format(FFP_BASE_DOLLARS);
-      tickerStatusEl.hidden = true;
-      requestAnimationFrame(renderTicker);
-      return;
-    }
-    const parts = centralParts(now);
-    const onWorkDay = !isWeekend(parts.weekday) && !HOLIDAYS[parts.iso];
-    const todayMs = onWorkDay ? activeMsToday(parts.minuteOfDay, parts.secondOfMinute) : 0;
-    const activeMs = completedWorkDays(parts.iso) * WORK_DAY_MS + todayMs;
-    const total = FFP_BASE_DOLLARS + activeMs * FFP_RATE_PER_MS;
-    tickerEl.textContent = currencyFmt.format(total);
-
-    const status = pauseStatus(parts);
-    if (status) {
-      tickerStatusEl.textContent = status;
-      tickerStatusEl.hidden = false;
-    } else {
-      tickerStatusEl.hidden = true;
-    }
-    requestAnimationFrame(renderTicker);
-  }
-  renderTicker();
-
-  const costEl = document.getElementById('cost');
-  const timerEl = document.getElementById('timer');
-  const rateEl = document.getElementById('rate');
-  const moodEmojiEl = document.getElementById('mood-emoji');
-  const moodMessageEl = document.getElementById('mood-message');
-  const startBtn = document.getElementById('start');
-  const stopBtn = document.getElementById('stop');
-  const restartBtn = document.getElementById('restart');
-  let tabEls = document.querySelectorAll('.tab');
-
-  let startTimestamp = null;   // wall-clock Date.now() ms when current run began (persisted across reloads)
-  let accumulatedMs = 0;        // elapsed from previous runs (for pause/resume)
+  // ─── state ────────────────────────────────────────────────────────────
+  let currentRatePerHour = DEFAULT_RATE;   // active rate in active currency
+  let currentCurrency = DEFAULT_CURRENCY;
+  let currentLabel = '';                   // optional meeting label
+  let currentSource = 'rate';              // 'rate' | 'attendees' | 'elon'
+  let currentAttendees = null;             // [{ role, count, rate }] when source==='attendees'
+  let startTimestamp = null;
+  let accumulatedMs = 0;
   let rafId = null;
   let lastMoodKey = null;
+  let elonUnlocked = false;
 
-  function elapsedMs() {
-    if (startTimestamp === null) return accumulatedMs;
-    return accumulatedMs + (Date.now() - startTimestamp);
-  }
+  const ratePerMs = () => currentRatePerHour / 3600 / 1000;
 
-  function formatCost(cost) {
-    return '$' + cost.toFixed(2);
-  }
-
-  function formatTimer(ms) {
-    const totalSeconds = Math.floor(ms / 1000);
-    const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-    const s = String(totalSeconds % 60).padStart(2, '0');
-    return `${m}:${s}`;
-  }
-
-  /**
-   * Given the current meeting cost in dollars, return how the page should react.
-   * Return shape: { key, emoji, message, bgColor, costColor, animate }
-   *   - key:       a string identifier for this mood tier (used so we only re-animate on change)
-   *   - emoji:     a single emoji shown above the message
-   *   - message:   short, funny/dry remark
-   *   - bgColor:   CSS color applied to <body> background
-   *   - costColor: CSS color applied to the big dollar counter
-   *   - animate:   one of 'pulse' | 'shake' | null — plays when this mood first activates
-   *
-   * Design this however you want. Consider at least a few tiers as cost climbs —
-   * chill at first, increasingly panicked as the dollars pile up. Tiers could
-   * be based on absolute dollars ($0, $10, $50, $200, $500+) or on time, or
-   * something weirder (compare to a sandwich, a flight, a mortgage payment).
-   */
-  function getMoodForCost(cost) {
-    if (cost < 1) {
-      return { key: 'idle', emoji: '☕', message: 'Small talk phase. Harmless.', bgColor: '#0f172a', costColor: '#f8fafc', animate: null };
-    }
-    if (cost < 10) {
-      return { key: 'warmup', emoji: '🙂', message: 'Productive discussion in progress.', bgColor: '#0f172a', costColor: '#cbd5e1', animate: 'pulse' };
-    }
-    if (cost < 25) {
-      return { key: 'coffee', emoji: '☕', message: 'That\'s a fancy latte. For each attendee.', bgColor: '#134e4a', costColor: '#5eead4', animate: 'pulse' };
-    }
-    if (cost < 50) {
-      return { key: 'lunch', emoji: '🌯', message: 'Congrats, you just bought the team lunch.', bgColor: '#155e75', costColor: '#67e8f9', animate: 'pulse' };
-    }
-    if (cost < 100) {
-      return { key: 'check', emoji: '🧾', message: 'This could have been an email.', bgColor: '#1e3a8a', costColor: '#93c5fd', animate: 'pulse' };
-    }
-    if (cost < 200) {
-      return { key: 'nice-dinner', emoji: '🍷', message: 'A nice dinner out. Gone.', bgColor: '#581c87', costColor: '#d8b4fe', animate: 'pulse' };
-    }
-    if (cost < 350) {
-      return { key: 'oof', emoji: '😬', message: 'Somebody should wrap this up.', bgColor: '#7c2d12', costColor: '#fdba74', animate: 'pulse' };
-    }
-    if (cost < 500) {
-      return { key: 'flight', emoji: '✈️', message: 'That\'s a round-trip ticket to Denver.', bgColor: '#991b1b', costColor: '#fca5a5', animate: 'pulse' };
-    }
-    if (cost < 750) {
-      return { key: 'panic', emoji: '🚨', message: 'THIS BETTER BE IMPORTANT.', bgColor: '#b91c1c', costColor: '#fff', animate: 'shake' };
-    }
-    if (cost < 1500) {
-      return { key: 'rent', emoji: '🏠', message: 'You just spent a week of rent. Leave.', bgColor: '#dc2626', costColor: '#fff', animate: 'shake' };
-    }
-    return { key: 'inferno', emoji: '🔥', message: 'Run. Just run.', bgColor: '#450a0a', costColor: '#fbbf24', animate: 'shake' };
-  }
-
-  function applyMood(mood) {
-    moodEmojiEl.textContent = mood.emoji;
-    moodMessageEl.textContent = mood.message;
-    document.body.style.backgroundColor = mood.bgColor;
-    costEl.style.color = mood.costColor;
-
-    if (mood.key !== lastMoodKey) {
-      lastMoodKey = mood.key;
-      if (mood.animate) {
-        costEl.classList.remove('pulse', 'shake');
-        void costEl.offsetWidth; // force reflow to restart animation
-        costEl.classList.add(mood.animate);
-      }
-    }
-  }
-
-  function render() {
-    const ms = elapsedMs();
-    const cost = ms * ratePerMs();
-    costEl.textContent = formatCost(cost);
-    timerEl.textContent = formatTimer(ms);
-    applyMood(getMoodForCost(cost));
-  }
-
-  // Returns true if state actually changed, false on a no-op (same team key).
-  // Callers use the return value to skip needless persistSession() writes.
-  function applyTeam(teamKey) {
-    if (!TEAMS[teamKey] || teamKey === currentTeamKey) return false;
-    currentTeamKey = teamKey;
-    const team = TEAMS[teamKey];
-    rateEl.textContent = `${team.icon} ${team.label} · ${team.displayRate}`;
-    tabEls.forEach(el => {
-      const active = el.dataset.team === teamKey;
-      el.classList.toggle('active', active);
-      el.setAttribute('aria-selected', active ? 'true' : 'false');
-    });
-    render();
-    return true;
-  }
-
-  tabEls.forEach(el => el.addEventListener('click', () => {
-    if (applyTeam(el.dataset.team)) persistSession();
-  }));
-
-  // localStorage wrappers that swallow private-mode and quota errors.
+  // ─── safe localStorage ────────────────────────────────────────────────
   const safeLS = {
     get(k)    { try { return localStorage.getItem(k); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch {} },
     remove(k) { try { localStorage.removeItem(k); } catch {} },
   };
 
-  // ─── custom rate (below the fold) ──────────────────────────────
-  const LS_KEY = 'meeting-cost:custom-rate-hourly';
-  const customForm = document.getElementById('custom-form');
-  const customInput = document.getElementById('custom-rate');
-  const customResetBtn = document.getElementById('custom-reset');
-  const customError = document.getElementById('custom-error');
-
+  // ─── formatters ───────────────────────────────────────────────────────
+  function getCurrency() {
+    return CURRENCIES.find(c => c.code === currentCurrency) || CURRENCIES[0];
+  }
+  function fractionDigits() {
+    return currentCurrency === 'JPY' ? 0 : 2;
+  }
+  function formatCost(cost) {
+    if (!isFinite(cost) || cost < 0) cost = 0;
+    const c = getCurrency();
+    const compact = cost >= COMPACT_THRESHOLD;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency', currency: c.code,
+      notation: compact ? 'compact' : 'standard',
+      minimumFractionDigits: compact ? 0 : fractionDigits(),
+      maximumFractionDigits: compact ? 2 : fractionDigits(),
+    }).format(cost);
+  }
   function formatHourly(n) {
-    return n % 1 === 0 ? n.toLocaleString('en-US') : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const c = getCurrency();
+    const fd = fractionDigits();
+    const isInt = Number.isInteger(n);
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency', currency: c.code,
+      minimumFractionDigits: isInt ? 0 : fd,
+      maximumFractionDigits: fd,
+    }).format(n);
+  }
+  function formatTimer(ms) {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(totalSeconds / 3600);
+    const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const s = String(totalSeconds % 60).padStart(2, '0');
+    return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
+  }
+  function elapsedMs() {
+    if (startTimestamp === null) return accumulatedMs;
+    return accumulatedMs + (Date.now() - startTimestamp);
+  }
+  function moodForMs(ms) {
+    const mins = ms / 60000;
+    for (const t of MOOD_TIERS) if (mins <= t.upTo) return t;
+    return MOOD_TIERS[MOOD_TIERS.length - 1];
   }
 
-  function applyCustomRate(hourlyRate) {
-    const display = `$${formatHourly(hourlyRate)} / hour`;
-    TEAMS.custom = {
-      label: 'Custom',
-      icon: '✏️',
-      ratePerMinute: hourlyRate / 60,
-      displayRate: display,
-    };
-    let tab = document.querySelector('.tab[data-team="custom"]');
-    if (!tab) {
-      tab = document.createElement('button');
-      tab.className = 'tab';
-      tab.dataset.team = 'custom';
-      tab.setAttribute('role', 'tab');
-      tab.setAttribute('aria-selected', 'false');
-      tab.addEventListener('click', () => {
-        if (applyTeam('custom')) persistSession();
-      });
-      document.querySelector('.tabs').appendChild(tab);
-      tabEls = document.querySelectorAll('.tab');
-    }
-    tab.innerHTML = `<span class="tab-icon">✏️</span> Custom · $${formatHourly(hourlyRate)}/hr`;
-    // If already on custom, applyTeam early-bails — do the rate-display refresh by hand.
-    if (currentTeamKey === 'custom') {
-      rateEl.textContent = `✏️ Custom · ${display}`;
-      render();
-    } else {
-      applyTeam('custom');
-    }
-  }
+  // ─── DOM refs ────────────────────────────────────────────────────────
+  const $ = (id) => document.getElementById(id);
+  const costEl = $('cost');
+  const timerEl = $('timer');
+  const rateValueEl = $('rate-value');
+  const rateInputEl = $('rate-input');
+  const rateSymbolEl = $('rate-symbol');
+  const rateErrorEl = $('rate-error');
+  const moodEmojiEl = $('mood-emoji');
+  const moodMessageEl = $('mood-message');
+  const startBtn = $('start');
+  const stopBtn = $('stop');
+  const restartBtn = $('restart');
+  const presetsEl = $('presets');
+  const rowsEl = $('attendee-rows');
+  const builderTotalEl = $('builder-total');
+  const builderErrorEl = $('builder-error');
+  const currencySelect = $('currency');
+  const labelInput = $('meeting-label');
+  const shareLinkEl = $('share-link');
+  const copyShareBtn = $('copy-share');
+  const copiedFlashEl = $('copied-flash');
 
-  function applyClearCustomRate() {
-    delete TEAMS.custom;
-    const tab = document.querySelector('.tab[data-team="custom"]');
-    if (tab) tab.remove();
-    tabEls = document.querySelectorAll('.tab');
-    customInput.value = '';
-    customError.textContent = '';
-    if (currentTeamKey === 'custom') {
-      currentTeamKey = null; // force applyTeam to actually run
-      applyTeam('ffp');
-    }
-  }
-
-  function persistCustomRate(hourlyRate) {
-    safeLS.set(LS_KEY, String(hourlyRate));
-  }
-
-  function clearPersistedCustomRate() {
-    safeLS.remove(LS_KEY);
-  }
-
-  customForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const rate = parseFloat(customInput.value);
-    if (!isFinite(rate) || rate <= 0) {
-      customError.textContent = 'Enter a positive hourly rate.';
-      return;
-    }
-    customError.textContent = '';
-    applyCustomRate(rate);
-    persistCustomRate(rate);
-    persistSession();
-  });
-
-  customResetBtn.addEventListener('click', () => {
-    applyClearCustomRate();
-    clearPersistedCustomRate();
-    persistSession();
-  });
-
-  // ─── session persistence ───────────────────────────────────────
-  const SESSION_KEY = 'meeting-cost:session-v1';
-  const STALE_AFTER_MS = 12 * 60 * 60 * 1000; // 12h cap on running sessions
-
-  function readSession() {
-    const raw = safeLS.get(SESSION_KEY);
-    if (!raw) return null;
-    try {
-      const s = JSON.parse(raw);
-      return s && s.v === 1 ? s : null;
-    } catch { return null; }
-  }
-
-  // 'ceo' is the Konami easter egg — intentionally not persistable.
-  function persistSession() {
-    if (currentTeamKey === 'ceo') return;
-    safeLS.set(SESSION_KEY, JSON.stringify({
-      v: 1,
-      teamKey: currentTeamKey,
-      accumulatedMs,
-      isRunning: startTimestamp !== null,
-      runStartedAtMs: startTimestamp,
-      savedAtMs: Date.now(),
-    }));
-  }
-
-  function clearPersistedSession() {
-    safeLS.remove(SESSION_KEY);
-  }
-
-  function applySession(session) {
-    if (!session) return;
-    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
-
-    const tk = session.teamKey;
-    if (tk && TEAMS[tk] && tk !== currentTeamKey) {
-      applyTeam(tk);
-    }
-
-    accumulatedMs = Math.max(0, session.accumulatedMs | 0);
-
-    const ageMs = typeof session.runStartedAtMs === 'number'
-      ? Date.now() - session.runStartedAtMs : Infinity;
-    const validRunning = !!session.isRunning && ageMs >= 0 && ageMs <= STALE_AFTER_MS;
-
-    if (validRunning) {
-      startTimestamp = session.runStartedAtMs;
-      startBtn.disabled = true;
-      startBtn.textContent = 'Start';
-      stopBtn.disabled = false;
-      restartBtn.disabled = false;
-      tick();
-    } else {
-      startTimestamp = null;
-      const hasProgress = accumulatedMs > 0;
-      startBtn.disabled = false;
-      startBtn.textContent = hasProgress ? 'Resume' : 'Start';
-      stopBtn.disabled = true;
-      restartBtn.disabled = !hasProgress;
-      render();
-    }
-  }
-
-  // Restore on load: custom rate first (so TEAMS.custom exists for session restore), then session.
-  const storedRate = parseFloat(safeLS.get(LS_KEY));
-  if (isFinite(storedRate) && storedRate > 0) {
-    customInput.value = storedRate;
-    applyCustomRate(storedRate);
-  }
-  applySession(readSession());
-
-  // Cross-tab sync: react to localStorage changes from other tabs/windows. Calls
-  // apply* only — never persist* — so we never echo a remote change back to storage.
-  window.addEventListener('storage', (e) => {
-    if (e.storageArea && e.storageArea !== localStorage) return;
-    if (e.key === SESSION_KEY) {
-      if (e.newValue === null) {
-        applySession({}); // Restart in another tab — applySession treats empty as idle.
-      } else {
-        try { applySession(JSON.parse(e.newValue)); } catch {}
-      }
-    } else if (e.key === LS_KEY) {
-      if (e.newValue === null) {
-        applyClearCustomRate();
-      } else {
-        const r = parseFloat(e.newValue);
-        if (isFinite(r) && r > 0) {
-          customInput.value = r;
-          applyCustomRate(r);
-        }
+  // ─── render ──────────────────────────────────────────────────────────
+  function applyMood(mood) {
+    moodEmojiEl.textContent = mood.emoji;
+    moodMessageEl.textContent = mood.message;
+    document.body.style.backgroundColor = mood.bg;
+    costEl.style.color = mood.color;
+    if (mood.key !== lastMoodKey) {
+      lastMoodKey = mood.key;
+      if (mood.anim) {
+        costEl.classList.remove('pulse', 'shake');
+        void costEl.offsetWidth;
+        costEl.classList.add(mood.anim);
       }
     }
-  });
-
+  }
+  function renderRateLine() {
+    let label = formatHourly(currentRatePerHour) + ' / hour';
+    if (currentSource === 'attendees' && currentAttendees) {
+      const total = currentAttendees.reduce((n, r) => n + r.count, 0);
+      label = `${total} ${total === 1 ? 'person' : 'people'} · ${formatHourly(currentRatePerHour)} / hour`;
+    } else if (currentSource === 'elon') {
+      label = `🚀 Elon Mode · ${formatHourly(currentRatePerHour)} / hour`;
+    }
+    rateValueEl.textContent = label;
+    rateSymbolEl.textContent = getCurrency().symbol;
+  }
+  function render() {
+    const ms = elapsedMs();
+    const cost = ms * ratePerMs();
+    costEl.textContent = formatCost(cost);
+    timerEl.textContent = formatTimer(ms);
+    applyMood(moodForMs(ms));
+    renderRateLine();
+  }
   function tick() {
     render();
     rafId = requestAnimationFrame(tick);
   }
 
+  // ─── controls ────────────────────────────────────────────────────────
   function start() {
     if (startTimestamp !== null) return;
     startTimestamp = Date.now();
     startBtn.disabled = true;
+    startBtn.textContent = 'Start';
     stopBtn.disabled = false;
     restartBtn.disabled = false;
     persistSession();
     tick();
   }
-
   function stop() {
     if (startTimestamp === null) return;
     accumulatedMs += Date.now() - startTimestamp;
     startTimestamp = null;
-    cancelAnimationFrame(rafId);
-    rafId = null;
+    cancelAnimationFrame(rafId); rafId = null;
     startBtn.disabled = false;
     startBtn.textContent = 'Resume';
     stopBtn.disabled = true;
     persistSession();
     render();
   }
-
   function restart() {
-    cancelAnimationFrame(rafId);
-    rafId = null;
+    cancelAnimationFrame(rafId); rafId = null;
     startTimestamp = null;
     accumulatedMs = 0;
     lastMoodKey = null;
@@ -883,46 +730,438 @@
     clearPersistedSession();
     render();
   }
-
   startBtn.addEventListener('click', start);
   stopBtn.addEventListener('click', stop);
   restartBtn.addEventListener('click', restart);
 
-  render();
+  // ─── rate validation (shared by single-rate input AND attendee rows) ──
+  // Returns { ok: true, value } or { ok: false, error }. Pure — no side effects.
+  // Min rate is currency-aware: JPY (and other zero-fraction currencies) get a
+  // floor of 1 unit instead of 0.01, otherwise "at least ¥0/hour" reads as a lie.
+  function minHourlyRate() {
+    return fractionDigits() === 0 ? 1 : MIN_HOURLY_RATE;
+  }
+  function validateRate(raw) {
+    const n = typeof raw === 'number' ? raw : parseFloat(raw);
+    if (!isFinite(n)) return { ok: false, error: 'Enter a number.' };
+    if (n <= 0) return { ok: false, error: 'Rate must be positive.' };
+    if (fractionDigits() === 0 && !Number.isInteger(n)) {
+      return { ok: false, error: `${getCurrency().code} doesn't use fractional units — whole numbers only.` };
+    }
+    const min = minHourlyRate();
+    if (n < min) return { ok: false, error: `Rate must be at least ${formatHourly(min)}/hour.` };
+    if (n > MAX_HOURLY_RATE) return { ok: false, error: `Whoa — cap is ${formatHourly(MAX_HOURLY_RATE)}/hour.` };
+    return { ok: true, value: n };
+  }
+  // Use Number() not parseInt() so "1.9" parses to 1.9 (rejected) instead of being
+  // silently truncated to 1. The error text says "whole number"; mean it.
+  function validateCount(raw) {
+    const n = typeof raw === 'number' ? raw : Number(raw);
+    if (!isFinite(n)) return { ok: false, error: 'Enter a whole number.' };
+    if (!Number.isInteger(n)) return { ok: false, error: 'Whole number, please.' };
+    if (n < 1) return { ok: false, error: 'Need at least 1 person.' };
+    if (n > MAX_ATTENDEE_COUNT) return { ok: false, error: `Per-row cap is ${MAX_ATTENDEE_COUNT.toLocaleString()} people.` };
+    return { ok: true, value: n };
+  }
 
-  // ─── easter egg ─────────────────────────────────────────────────
-  // ↑ ↑ ↓ ↓ ← → ← → B A
+  // ─── single-rate form ────────────────────────────────────────────────
+  const rateForm = $('rate-form');
+  rateForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = validateRate(rateInputEl.value);
+    if (!v.ok) { rateErrorEl.textContent = v.error; return; }
+    rateErrorEl.textContent = '';
+    applyRate(v.value);
+    persistSession();
+    updateShareLink();
+  });
+
+  // apply* mutates state only; persist* writes only.
+  function applyRate(rate) {
+    currentRatePerHour = rate;
+    currentSource = 'rate';
+    currentAttendees = null;
+    rateInputEl.value = rate;
+    render();
+  }
+  function applyAttendees(rows) {
+    // rows: [{ role, count, rate }] — already validated.
+    const total = rows.reduce((n, r) => n + r.count * r.rate, 0);
+    currentRatePerHour = total;
+    currentSource = 'attendees';
+    currentAttendees = rows.map(r => ({ ...r }));
+    rateInputEl.value = total;
+    render();
+  }
+  function applyCurrency(code) {
+    if (!CURRENCIES.find(c => c.code === code)) return false;
+    if (currentCurrency === code) return false;
+    currentCurrency = code;
+    currencySelect.value = code;
+    rateSymbolEl.textContent = getCurrency().symbol;
+    // Match the input's step to the currency's fraction digits so JPY can't
+    // ratchet by 0.01 in the spinner.
+    rateInputEl.step = fractionDigits() === 0 ? '1' : '0.01';
+    // Preset price labels and the per-row currency prefixes are re-derived
+    // from currentCurrency on every render. Owning that here means anywhere
+    // applyCurrency is called (URL load, session restore, change handler) the
+    // whole UI snaps to the new symbol — callers don't have to remember.
+    if (presetsEl.children.length) renderPresets();
+    if (rowsEl.children.length) renderRows();
+    render();
+    return true;
+  }
+  function applyLabel(label) {
+    currentLabel = (label || '').slice(0, 40);
+    if (labelInput.value !== currentLabel) labelInput.value = currentLabel;
+  }
+
+  // ─── attendee builder ────────────────────────────────────────────────
+  // Live state of the editor (separate from currentAttendees, which is the
+  // applied/active set). User edits here; clicking "Apply to meter" promotes.
+  let draftRows = [{ role: '', count: 1, rate: 100 }];
+
+  function renderRows() {
+    rowsEl.innerHTML = '';
+    const stepRate = fractionDigits() === 0 ? '1' : '0.01';
+    draftRows.forEach((row, idx) => {
+      const div = document.createElement('div');
+      div.className = 'row';
+      div.dataset.idx = idx;
+      div.innerHTML = `
+        <input class="role" type="text" maxlength="40" placeholder="Role (e.g. Engineer)" value="${escapeAttr(row.role)}" aria-label="Role" />
+        <span class="num-wrap">
+          <input class="count-input" type="number" min="1" max="${MAX_ATTENDEE_COUNT}" step="1" inputmode="numeric" value="${row.count}" aria-label="Headcount" />
+          <span class="label">×</span>
+        </span>
+        <span class="num-wrap">
+          <span class="label">${getCurrency().symbol}</span>
+          <input class="rate-input" type="number" min="0" max="${MAX_HOURLY_RATE}" step="${stepRate}" inputmode="decimal" value="${row.rate}" aria-label="Hourly rate" />
+          <span class="label">/hr</span>
+        </span>
+        <button type="button" class="remove" aria-label="Remove row" title="Remove row">×</button>
+      `;
+      rowsEl.appendChild(div);
+    });
+    renderBuilderTotal();
+  }
+  function escapeAttr(s) {
+    return String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function readDraftFromDOM() {
+    const out = [];
+    rowsEl.querySelectorAll('.row').forEach(div => {
+      const role = div.querySelector('input.role').value || '';
+      // Number() not parseInt() so fractional inputs surface to validateCount
+      // for rejection, not silent truncation.
+      const count = Number(div.querySelector('input.count-input').value);
+      const rate = parseFloat(div.querySelector('input.rate-input').value);
+      out.push({ role, count, rate });
+    });
+    draftRows = out.length ? out : [{ role: '', count: 1, rate: 100 }];
+  }
+  function renderBuilderTotal() {
+    let totalHourly = 0;
+    let bad = false;
+    for (const r of draftRows) {
+      const c = validateCount(r.count);
+      const v = validateRate(r.rate);
+      if (!c.ok || !v.ok) { bad = true; break; }
+      totalHourly += c.value * v.value;
+    }
+    builderTotalEl.textContent = bad ? '—' : `${formatHourly(totalHourly)} / hour`;
+  }
+
+  rowsEl.addEventListener('input', () => { readDraftFromDOM(); renderBuilderTotal(); });
+  rowsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.remove');
+    if (!btn) return;
+    readDraftFromDOM();
+    const idx = parseInt(btn.closest('.row').dataset.idx, 10);
+    if (draftRows.length === 1) draftRows = [{ role: '', count: 1, rate: 100 }];
+    else draftRows.splice(idx, 1);
+    renderRows();
+  });
+
+  $('add-row').addEventListener('click', () => {
+    readDraftFromDOM();
+    if (draftRows.length >= MAX_ATTENDEE_ROWS) {
+      builderErrorEl.textContent = `Row cap is ${MAX_ATTENDEE_ROWS}.`;
+      return;
+    }
+    builderErrorEl.textContent = '';
+    draftRows.push({ role: '', count: 1, rate: 100 });
+    renderRows();
+  });
+
+  $('apply-builder').addEventListener('click', () => {
+    readDraftFromDOM();
+    const rows = [];
+    for (const r of draftRows) {
+      const c = validateCount(r.count);
+      const v = validateRate(r.rate);
+      if (!c.ok) { builderErrorEl.textContent = `Headcount: ${c.error}`; return; }
+      if (!v.ok) { builderErrorEl.textContent = `Rate: ${v.error}`; return; }
+      rows.push({ role: (r.role || '').slice(0, 40), count: c.value, rate: v.value });
+    }
+    const total = rows.reduce((n, r) => n + r.count * r.rate, 0);
+    if (total > MAX_HOURLY_RATE) {
+      builderErrorEl.textContent = `Total exceeds ${formatHourly(MAX_HOURLY_RATE)}/hour cap.`;
+      return;
+    }
+    builderErrorEl.textContent = '';
+    applyAttendees(rows);
+    persistSession();
+    updateShareLink();
+  });
+
+  $('clear-builder').addEventListener('click', () => {
+    draftRows = [{ role: '', count: 1, rate: 100 }];
+    builderErrorEl.textContent = '';
+    renderRows();
+  });
+
+  // ─── presets ─────────────────────────────────────────────────────────
+  function renderPresets() {
+    presetsEl.innerHTML = '';
+    PRESETS.forEach(p => {
+      const total = p.rows.reduce((n, r) => n + r.count * r.rate, 0);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'preset';
+      btn.dataset.preset = p.id;
+      btn.innerHTML = `${p.label} <span style="opacity:.6">· ${formatHourly(total)}/hr</span>`;
+      btn.addEventListener('click', () => {
+        draftRows = p.rows.map(r => ({ ...r }));
+        builderErrorEl.textContent = '';
+        renderRows();
+        // Auto-apply so first-timers see immediate feedback at the top.
+        $('apply-builder').click();
+      });
+      presetsEl.appendChild(btn);
+    });
+  }
+
+  // ─── currency + label ───────────────────────────────────────────────
+  function renderCurrencyOptions() {
+    currencySelect.innerHTML = '';
+    CURRENCIES.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = c.label;
+      currencySelect.appendChild(opt);
+    });
+  }
+  currencySelect.addEventListener('change', () => {
+    if (applyCurrency(currencySelect.value)) {
+      // applyCurrency owns the preset/row re-render now.
+      persistSession();
+      updateShareLink();
+    }
+  });
+  labelInput.addEventListener('input', () => {
+    applyLabel(labelInput.value);
+    persistSession();
+    updateShareLink();
+  });
+
+  // ─── share link ──────────────────────────────────────────────────────
+  function buildShareUrl() {
+    const params = new URLSearchParams();
+    if (currentSource === 'attendees' && currentAttendees) {
+      params.set('a', currentAttendees.map(r => `${r.count}x${r.rate}`).join(','));
+    } else {
+      params.set('r', String(currentRatePerHour));
+    }
+    if (currentCurrency !== DEFAULT_CURRENCY) params.set('c', currentCurrency);
+    if (currentLabel) params.set('n', currentLabel);
+    // location.origin is the literal string "null" when the page is opened
+    // from disk via file://. Fall back to the deployed canonical URL the OG
+    // meta already assumes.
+    const origin = (!location.origin || location.origin === 'null') ? 'https://lesstalk.ing' : location.origin;
+    return `${origin}/?${params.toString()}`;
+  }
+  function updateShareLink() {
+    const url = buildShareUrl();
+    shareLinkEl.textContent = url.replace(/^https?:\/\//, '');
+    shareLinkEl.dataset.url = url;
+  }
+  copyShareBtn.addEventListener('click', async () => {
+    const url = shareLinkEl.dataset.url || buildShareUrl();
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Fallback: select the visible text so user can copy manually.
+      const r = document.createRange(); r.selectNodeContents(shareLinkEl);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    }
+    copiedFlashEl.classList.add('show');
+    setTimeout(() => copiedFlashEl.classList.remove('show'), 1400);
+  });
+
+  // ─── persistence ─────────────────────────────────────────────────────
+  // 'elon' source is the easter egg — intentionally not persisted, like the
+  // CEO mode in the original. Konami should always feel surprising.
+  function persistSession() {
+    if (currentSource === 'elon') return;
+    const payload = {
+      v: 1,
+      source: currentSource,
+      ratePerHour: currentRatePerHour,
+      attendees: currentAttendees,
+      currency: currentCurrency,
+      label: currentLabel,
+      accumulatedMs,
+      isRunning: startTimestamp !== null,
+      runStartedAtMs: startTimestamp,
+      savedAtMs: Date.now(),
+    };
+    safeLS.set(SESSION_KEY, JSON.stringify(payload));
+  }
+  function clearPersistedSession() {
+    safeLS.remove(SESSION_KEY);
+  }
+  function readSession() {
+    const raw = safeLS.get(SESSION_KEY);
+    if (!raw) return null;
+    try {
+      const s = JSON.parse(raw);
+      return s && s.v === 1 ? s : null;
+    } catch { return null; }
+  }
+
+  // applySession is the single state-installer. Idempotent. Tolerates partial
+  // input so applySession({}) parks the UI in a clean idle state — used by the
+  // cross-tab Restart handler below.
+  function applySession(s) {
+    if (!s) return;
+    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+
+    if (s.currency) applyCurrency(s.currency);
+    if (typeof s.label === 'string') applyLabel(s.label);
+
+    if (s.source === 'attendees' && Array.isArray(s.attendees) && s.attendees.length) {
+      const safe = [];
+      for (const r of s.attendees) {
+        const c = validateCount(r.count);
+        const v = validateRate(r.rate);
+        if (c.ok && v.ok) safe.push({ role: String(r.role || '').slice(0, 40), count: c.value, rate: v.value });
+      }
+      if (safe.length) {
+        applyAttendees(safe);
+        draftRows = safe.map(r => ({ ...r }));
+        renderRows();
+      }
+    } else if (typeof s.ratePerHour === 'number') {
+      const v = validateRate(s.ratePerHour);
+      if (v.ok) applyRate(v.value);
+    }
+
+    // Don't use `| 0` here — it truncates to 32-bit and silently mangles large
+    // accumulated durations (e.g., a multi-day session restored from LS).
+    const accRaw = Number(s.accumulatedMs);
+    accumulatedMs = isFinite(accRaw) && accRaw > 0 ? Math.floor(accRaw) : 0;
+    const ageMs = typeof s.runStartedAtMs === 'number' ? Date.now() - s.runStartedAtMs : Infinity;
+    const validRunning = !!s.isRunning && ageMs >= 0 && ageMs <= STALE_AFTER_MS;
+    if (validRunning) {
+      startTimestamp = s.runStartedAtMs;
+      startBtn.disabled = true; startBtn.textContent = 'Start';
+      stopBtn.disabled = false; restartBtn.disabled = false;
+      tick();
+    } else {
+      startTimestamp = null;
+      const hasProgress = accumulatedMs > 0;
+      startBtn.disabled = false;
+      startBtn.textContent = hasProgress ? 'Resume' : 'Start';
+      stopBtn.disabled = true;
+      restartBtn.disabled = !hasProgress;
+      render();
+    }
+    updateShareLink();
+  }
+
+  // ─── URL state (?r=, ?a=, ?c=, ?n=) ──────────────────────────────────
+  function applyFromQuery() {
+    const q = new URLSearchParams(location.search);
+    if (!q.has('r') && !q.has('a') && !q.has('c') && !q.has('n')) return false;
+
+    if (q.has('c')) applyCurrency(q.get('c').toUpperCase());
+    if (q.has('n')) applyLabel(q.get('n'));
+
+    if (q.has('a')) {
+      const rows = [];
+      for (const part of q.get('a').split(',')) {
+        const m = part.match(/^(\d+)x(\d+(?:\.\d+)?)$/);
+        if (!m) continue;
+        const c = validateCount(parseInt(m[1], 10));
+        const v = validateRate(parseFloat(m[2]));
+        if (c.ok && v.ok) rows.push({ role: '', count: c.value, rate: v.value });
+        if (rows.length >= MAX_ATTENDEE_ROWS) break;
+      }
+      if (rows.length) {
+        const total = rows.reduce((n, r) => n + r.count * r.rate, 0);
+        if (total <= MAX_HOURLY_RATE) {
+          applyAttendees(rows);
+          draftRows = rows.map(r => ({ ...r }));
+          // Without this, the meter shows the URL-driven total but the builder
+          // panel below the fold still shows the default 1-row draft — confusing.
+          renderRows();
+          builderErrorEl.textContent = '';
+          return true;
+        }
+      }
+    } else if (q.has('r')) {
+      const v = validateRate(parseFloat(q.get('r')));
+      if (v.ok) { applyRate(v.value); return true; }
+    }
+    return false;
+  }
+
+  // ─── cross-tab sync ──────────────────────────────────────────────────
+  window.addEventListener('storage', (e) => {
+    if (e.storageArea && e.storageArea !== localStorage) return;
+    if (e.key !== SESSION_KEY) return;
+    if (e.newValue === null) {
+      // Restart in another tab. applySession({}) leaves the local rate /
+      // currency / label untouched (those branches early-bail on missing
+      // fields) and parks the timer idle with accumulatedMs = 0.
+      applySession({});
+    } else {
+      try { applySession(JSON.parse(e.newValue)); } catch {}
+    }
+  });
+
+  // ─── Elon Mode (Konami easter egg) ───────────────────────────────────
+  // Headline rate based on the widely-cited 2021 net-worth-growth peak — at
+  // various points his wealth grew ~$25M/minute. We use $250,000/minute as a
+  // recognizable, less-cartoonish anchor. It's a joke, not a tax filing.
+  const ELON_RATE_PER_MIN = 250_000;
+  const ELON_RATE_PER_HOUR = ELON_RATE_PER_MIN * 60;
   const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
   let konamiIdx = 0;
-  let ceoUnlocked = false;
-
   window.addEventListener('keydown', (e) => {
+    // Don't intercept typing in form fields — typing the literal sequence
+    // ↑↑↓↓←→←→ba into the meeting label shouldn't trigger the easter egg.
+    const tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     konamiIdx = (key === KONAMI[konamiIdx]) ? konamiIdx + 1 : 0;
     if (konamiIdx === KONAMI.length) {
       konamiIdx = 0;
-      if (!ceoUnlocked) unlockCEO();
+      if (!elonUnlocked) unlockElon();
     }
   });
-
-  function unlockCEO() {
-    ceoUnlocked = true;
-    TEAMS.ceo = { label: 'The CEO', icon: '👔', ratePerMinute: 500, displayRate: '$500 / minute' };
-    const btn = document.createElement('button');
-    btn.className = 'tab';
-    btn.dataset.team = 'ceo';
-    btn.setAttribute('role', 'tab');
-    btn.setAttribute('aria-selected', 'false');
-    btn.innerHTML = '<span class="tab-icon">👔</span> The CEO';
-    btn.addEventListener('click', () => applyTeam('ceo'));
-    document.querySelector('.tabs').appendChild(btn);
-    tabEls = document.querySelectorAll('.tab');
+  function unlockElon() {
+    elonUnlocked = true;
+    currentRatePerHour = ELON_RATE_PER_HOUR;
+    currentSource = 'elon';
+    currentAttendees = null;
+    rateInputEl.value = ELON_RATE_PER_HOUR;
     rainMoney();
-    applyTeam('ceo');
+    render();
   }
-
   function rainMoney() {
-    const emojis = ['💸','💰','💵','🤑','💎'];
+    const emojis = ['💸','💰','💵','🤑','💎','🚀'];
     for (let i = 0; i < 40; i++) {
       const el = document.createElement('div');
       el.className = 'money-drop';
@@ -936,14 +1175,26 @@
     }
   }
 
-  // console greeting for the devtools-curious
+  // ─── boot ────────────────────────────────────────────────────────────
+  renderCurrencyOptions();
+  currencySelect.value = currentCurrency;
+  rateInputEl.value = currentRatePerHour;
+  rateInputEl.step = fractionDigits() === 0 ? '1' : '0.01';
+  renderPresets();
+  renderRows();
+
+  // URL wins over localStorage so a shared link always reflects the sender's setup.
+  if (!applyFromQuery()) applySession(readSession());
+  updateShareLink();
+
   console.log(
-    '%c💸 Meeting Cost-o-Meter %c\n' +
+    '%c💸 Meeting Cost Calculator %c\n' +
     'Hint: try a certain 1985 arrow-heavy sequence on this page.\n' +
     'Source: https://github.com/CalamityAdam/meeting-cost',
     'font-size: 16px; font-weight: bold; color: #fbbf24;',
     'font-size: 12px; color: #94a3b8;'
   );
 </script>
+
 </body>
 </html>
