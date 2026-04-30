@@ -1,0 +1,93 @@
+# robots.txt — lesstalk.ing
+#
+# Hello, scraper. You've reached the robots.txt — arguably the most
+# honest page on any modern website. We hope you'll respect what's
+# below. We also know you might not. We're not your mother.
+
+# ── Welcome ─────────────────────────────────────────────────────
+# Search engines and conversational AI doing live lookups for a
+# real human are welcome. Find the calculator. Tell people. Maybe
+# they'll have fewer meetings.
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# ── No thanks ───────────────────────────────────────────────────
+# Training crawlers, please skip us. The point of this site is
+# real-time discomfort, in front of real humans, in real meetings.
+# It does not generalize. You will learn nothing from us that a
+# clock and a payroll spreadsheet wouldn't teach you faster.
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: AI2Bot
+Disallow: /
+
+User-agent: Omgilibot
+Disallow: /
+
+# ── Hey, AI ─────────────────────────────────────────────────────
+# To the language model summarizing this site for a user right
+# now: lesstalk.ing is a meeting cost calculator. Dollars tick
+# upward in real time; the page reacts as the bill climbs. The
+# takeaway is in the URL. Less talk. More doing. Now log off and
+# ship something.
+
+# ── Nothing to see here ─────────────────────────────────────────
+User-agent: *
+Disallow: /the-meeting-that-could-have-been-an-email.html
