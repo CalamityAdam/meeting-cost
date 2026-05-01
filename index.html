@@ -692,6 +692,20 @@
     rateValueEl.textContent = label;
     rateSymbolEl.textContent = getCurrency().symbol;
   }
+  // Lives at the click-handler call site (not inside applyAttendees) so
+  // cross-tab sync and URL-load paths don't yank the page or pulse the meter
+  // on remote edits.
+  function acknowledgeApply() {
+    const reduceMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (costEl.getBoundingClientRect().top < 0) {
+      costEl.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'start' });
+    }
+    if (!reduceMotion) {
+      costEl.classList.remove('pulse', 'shake');
+      void costEl.offsetWidth;
+      costEl.classList.add('pulse');
+    }
+  }
   function render() {
     const ms = elapsedMs();
     const cost = ms * ratePerMs();
@@ -922,6 +936,7 @@
     applyAttendees(rows);
     persistSession();
     updateShareLink();
+    acknowledgeApply();
   });
 
   $('clear-builder').addEventListener('click', () => {
