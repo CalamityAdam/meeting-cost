@@ -698,7 +698,7 @@
   function acknowledgeApply() {
     const reduceMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (costEl.getBoundingClientRect().top < 0) {
-      window.scrollTo({ top: 0, behavior: reduceMotion ? 'instant' : 'smooth' });
+      costEl.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'start' });
     }
     if (!reduceMotion) {
       costEl.classList.remove('pulse', 'shake');
