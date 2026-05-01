@@ -692,10 +692,9 @@
     rateValueEl.textContent = label;
     rateSymbolEl.textContent = getCurrency().symbol;
   }
-  // Visual ack for "Apply to meter": scrolls the meter into view if it's
-  // off-screen, then pulses the cost number. Lives at the click-handler call
-  // site (not inside applyAttendees) so cross-tab sync and URL-load paths
-  // don't yank the page or pulse the meter on remote edits.
+  // Lives at the click-handler call site (not inside applyAttendees) so
+  // cross-tab sync and URL-load paths don't yank the page or pulse the meter
+  // on remote edits.
   function acknowledgeApply() {
     const reduceMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (costEl.getBoundingClientRect().top < 0) {
